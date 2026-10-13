@@ -90,7 +90,7 @@ def produce(rows, root):
         number = re.search(r'\d+',group[0]['AreaNum'])
         if not number:
             raise ValueError('Unexpected congressional area identifier')
-        record = {'district':f'NE-{int(number.group()):02d}','race_id':group[0]['RaceID'],
+        record = {'district_keys':str(int(number.group())),'district':f'NE-{int(number.group()):02d}','race_id':group[0]['RaceID'],
                   'total_votes':total,'precincts_reporting':reporting,'precincts_total':precinct_total,
                   'source_updated':group[0]['CurrentDateTime']}
         for p in PARTIES:
@@ -98,7 +98,7 @@ def produce(rows, root):
             record[p.lower()+'_pct'] = round(100*party_votes[p]/total,3) if total else 0
         record['has_results'] = 'yes' if total else 'no'
         wide.append(record)
-    wide_fields = ['district','race_id','total_votes','precincts_reporting','precincts_total','source_updated','has_results'] + [f'{p.lower()}_{suffix}' for p in PARTIES for suffix in ('votes','pct')]
+    wide_fields = ['district_keys','district','race_id','total_votes','precincts_reporting','precincts_total','source_updated','has_results'] + [f'{p.lower()}_{suffix}' for p in PARTIES for suffix in ('votes','pct')]
     csv_write(feeds/'congress.csv',wide,wide_fields)
     # Convenience feeds for named statewide contests, based on area type and race name.
     for label,term in [('senate','united states senator'),('governor','governor')]:

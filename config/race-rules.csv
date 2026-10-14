@@ -1,0 +1,8 @@
+match_type,match_value,template
+area_type,CG,candidate_bars
+race_name_contains,retention,retention
+race_name_contains,retain,retention
+race_name_contains,initiative,ballot_measure
+race_name_contains,referendum,ballot_measure
+race_name_contains,amendment,ballot_measure
+fallback,*,results_table

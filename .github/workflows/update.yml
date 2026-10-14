@@ -18,7 +18,9 @@ jobs:
         with:
           python-version: '3.12'
       - name: Fetch and transform
-        run: python update.py --output public
+        run: |
+          python update.py --output public
+          python build_views.py --public public --config config
       - name: Commit changed results
         run: |
           git config user.name 'election-results-bot'

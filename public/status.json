@@ -1,9 +1,9 @@
 {
   "source_url": "https://electionresults.nebraska.gov/resultsCSV.aspx?text=All&type=All&map=CTY",
-  "source_sha256": "cab16f48b0f0fcc82ffaf8bf819a4b4ae50f91f0e301f8bcd517ade9f0e4be87",
-  "processed_at_utc": "2026-10-17T07:42:49.956906+00:00",
+  "source_sha256": "39cd190fb22b76d86f4bccacdd21dab159c8f038a08f4e86ca36d2ce2510dc1d",
+  "processed_at_utc": "2026-10-17T08:06:41.624673+00:00",
   "candidate_rows": 625,
   "races": 463,
   "congressional_districts": 3,
-  "source_updated": "10/17/2026 2:42:49 AM"
+  "source_updated": "10/17/2026 3:06:40 AM"
 }

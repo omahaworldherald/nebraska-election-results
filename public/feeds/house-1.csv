@@ -1,5 +1,5 @@
-Candidate,Party,Votes,Vote %,Precincts reporting %,Last updated,Race ID,Candidate ID
-Chris Backemeyer,Democratic,0,,0.0,10/17/2026 5:33:46 PM,13165,3039
-Dan Hartong,America First,0,,0.0,10/17/2026 5:33:46 PM,13165,3430
-Mike Flood,Republican,0,,0.0,10/17/2026 5:33:46 PM,13165,3071
-Nik Sandman,Libertarian,0,,0.0,10/17/2026 5:33:46 PM,13165,3202
+RaceID,RaceName,PartyCode,AreaType,AreaNum,OfficeSeqNo,BallotOrder,CandidateID,CandidateName,CurrentDateTime,VoteFor,CandidateVotes,CandidatePercentage,PrecinctsReporting
+13165,For Representative in Congress - 2  Year Term,REP,CG,District 01,103,,3071,Mike  Flood ,10/17/2026 5:37:21 PM,1,0,0,"=""0/438"""
+13165,For Representative in Congress - 2  Year Term,DEM,CG,District 01,103,,3039,Chris  Backemeyer ,10/17/2026 5:37:21 PM,1,0,0,"=""0/438"""
+13165,For Representative in Congress - 2  Year Term,LIB,CG,District 01,103,,3202,Nik  Sandman ,10/17/2026 5:37:21 PM,1,0,0,"=""0/438"""
+13165,For Representative in Congress - 2  Year Term,AFP,CG,District 01,103,,3430,Dan  Hartong ,10/17/2026 5:37:21 PM,1,0,0,"=""0/438"""

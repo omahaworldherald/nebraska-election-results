@@ -1,5 +1,5 @@
-Candidate,Party,Votes,Vote %,Precincts reporting %,Last updated,Race ID,Candidate ID
-Brett Lindstrom and Michael Picard,America First,0,,0.0,10/17/2026 5:33:46 PM,13508,3428
-Jim Pillen and Joe Kelly,Republican,0,,0.0,10/17/2026 5:33:46 PM,13508,3352
-Lynne Walz and Ben Steffen,Democratic,0,,0.0,10/17/2026 5:33:46 PM,13508,3353
-Rick Beard and Keenya Barnes,Legal Marijuana NOW,0,,0.0,10/17/2026 5:33:46 PM,13508,3354
+RaceID,RaceName,PartyCode,AreaType,AreaNum,OfficeSeqNo,BallotOrder,CandidateID,CandidateName,CurrentDateTime,VoteFor,CandidateVotes,CandidatePercentage,PrecinctsReporting
+13508,For Governor and Lt. Governor,REP,SW,,105,,3352,Jim Pillen and Joe Kelly ,10/17/2026 5:37:21 PM,1,0,0,"=""0/1322"""
+13508,For Governor and Lt. Governor,DEM,SW,,105,,3353,Lynne Walz and Ben Steffen ,10/17/2026 5:37:21 PM,1,0,0,"=""0/1322"""
+13508,For Governor and Lt. Governor,LMN,SW,,105,,3354,Rick Beard and Keenya Barnes ,10/17/2026 5:37:21 PM,1,0,0,"=""0/1322"""
+13508,For Governor and Lt. Governor,AFP,SW,,105,,3428,Brett Lindstrom and Michael Picard ,10/17/2026 5:37:21 PM,1,0,0,"=""0/1322"""

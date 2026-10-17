@@ -1,6 +1,6 @@
-Candidate,Party,Votes,Vote %,Precincts reporting %,Last updated,Race ID,Candidate ID
-Chuck Conboy,America First,0,,0.0,10/17/2026 5:33:46 PM,13224,3429
-Dan Osborn,Petition,0,,0.0,10/17/2026 5:33:46 PM,13224,3365
-Mike Marvin,Legal Marijuana NOW,0,,0.0,10/17/2026 5:33:46 PM,13224,3249
-Pete Ricketts,Republican,0,,0.0,10/17/2026 5:33:46 PM,13224,3012
-Robin Richards,Nebraska Working People,0,,0.0,10/17/2026 5:33:46 PM,13224,3434
+RaceID,RaceName,PartyCode,AreaType,AreaNum,OfficeSeqNo,BallotOrder,CandidateID,CandidateName,CurrentDateTime,VoteFor,CandidateVotes,CandidatePercentage,PrecinctsReporting
+13224,For United States Senator - 6  Year Term,REP,SW,,102,,3012,Pete  Ricketts ,10/17/2026 5:37:21 PM,1,0,0,"=""0/1322"""
+13224,For United States Senator - 6  Year Term,LMN,SW,,102,,3249,Mike  Marvin ,10/17/2026 5:37:21 PM,1,0,0,"=""0/1322"""
+13224,For United States Senator - 6  Year Term,NWP,SW,,102,,3434,Robin  Richards ,10/17/2026 5:37:21 PM,1,0,0,"=""0/1322"""
+13224,For United States Senator - 6  Year Term,AFP,SW,,102,,3429,Chuck  Conboy ,10/17/2026 5:37:21 PM,1,0,0,"=""0/1322"""
+13224,For United States Senator - 6  Year Term,PET,SW,,102,,3365,Dan  Osborn ,10/17/2026 5:37:21 PM,1,0,0,"=""0/1322"""

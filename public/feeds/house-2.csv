@@ -1,4 +1,4 @@
-Candidate,Party,Votes,Vote %,Precincts reporting %,Last updated,Race ID,Candidate ID
-Brinker Harding,Republican,0,,0.0,10/17/2026 5:33:46 PM,13166,2792
-Denise Powell,Democratic,0,,0.0,10/17/2026 5:33:46 PM,13166,3138
-Eric Michael Foreman,Libertarian,0,,0.0,10/17/2026 5:33:46 PM,13166,3239
+RaceID,RaceName,PartyCode,AreaType,AreaNum,OfficeSeqNo,BallotOrder,CandidateID,CandidateName,CurrentDateTime,VoteFor,CandidateVotes,CandidatePercentage,PrecinctsReporting
+13166,For Representative in Congress - 2  Year Term,REP,CG,District 02,103,,2792,Brinker  Harding ,10/17/2026 5:37:21 PM,1,0,0,"=""0/334"""
+13166,For Representative in Congress - 2  Year Term,DEM,CG,District 02,103,,3138,Denise  Powell ,10/17/2026 5:37:21 PM,1,0,0,"=""0/334"""
+13166,For Representative in Congress - 2  Year Term,LIB,CG,District 02,103,,3239,Eric Michael Foreman ,10/17/2026 5:37:21 PM,1,0,0,"=""0/334"""

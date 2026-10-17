@@ -2,36 +2,31 @@
   {
     "slug": "senate",
     "race_id": "13224",
-    "title": "For United States Senator - 6  Year Term",
-    "feed": "feeds/senate.csv",
-    "has_results": false
+    "race_name": "For United States Senator - 6  Year Term",
+    "feed": "feeds/senate.csv"
   },
   {
     "slug": "governor",
     "race_id": "13508",
-    "title": "For Governor and Lt. Governor",
-    "feed": "feeds/governor.csv",
-    "has_results": false
+    "race_name": "For Governor and Lt. Governor",
+    "feed": "feeds/governor.csv"
   },
   {
     "slug": "house-1",
     "race_id": "13165",
-    "title": "For Representative in Congress - 2  Year Term",
-    "feed": "feeds/house-1.csv",
-    "has_results": false
+    "race_name": "For Representative in Congress - 2  Year Term",
+    "feed": "feeds/house-1.csv"
   },
   {
     "slug": "house-2",
     "race_id": "13166",
-    "title": "For Representative in Congress - 2  Year Term",
-    "feed": "feeds/house-2.csv",
-    "has_results": false
+    "race_name": "For Representative in Congress - 2  Year Term",
+    "feed": "feeds/house-2.csv"
   },
   {
     "slug": "house-3",
     "race_id": "13167",
-    "title": "For Representative in Congress - 2  Year Term",
-    "feed": "feeds/house-3.csv",
-    "has_results": false
+    "race_name": "For Representative in Congress - 2  Year Term",
+    "feed": "feeds/house-3.csv"
   }
 ]

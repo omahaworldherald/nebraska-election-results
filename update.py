@@ -1,167 +1,116 @@
 #!/usr/bin/env python3
-"""Small Nebraska results collector. Standard library only. No Datawrapper API."""
+"""Split Nebraska's official All Contests CSV without changing source fields."""
 import argparse
 import csv
-import hashlib
 import io
 import json
-import re
 import urllib.request
 from collections import defaultdict
-from datetime import datetime, timezone
 from pathlib import Path
 
 SOURCE = 'https://electionresults.nebraska.gov/resultsCSV.aspx?text=All&type=All&map=CTY'
-REQUIRED = {'RaceID', 'RaceName', 'AreaType', 'AreaNum', 'CandidateID', 'CandidateName',
-            'PartyCode', 'CandidateVotes', 'PrecinctsReporting', 'CurrentDateTime'}
-PARTIES = ['REP', 'DEM', 'LIB', 'LMN', 'NWP', 'AFP', 'IND', 'OTH']
-PARTY_NAMES = {'REP':'Republican', 'DEM':'Democratic', 'LIB':'Libertarian',
-               'LMN':'Legal Marijuana NOW', 'NWP':'Nebraska Working People',
-               'AFP':'America First', 'IND':'Independent', 'OTH':'Other', 'PET':'Petition'}
-CANDIDATE_COLUMNS = ['Candidate', 'Party', 'Votes', 'Vote %', 'Precincts reporting %',
-                     'Last updated', 'Race ID', 'Candidate ID']
-MEASURE_COLUMNS = ['Ballot measure', 'For %', 'Against %', 'For votes', 'Against votes',
-                   'Total votes', 'Precincts reporting %', 'Last updated', 'Has results']
-CONGRESS_COLUMNS = ['district_keys','district','race_id','total_votes','precincts_reporting',
-                    'precincts_total','source_updated','has_results'] + [f'{p.lower()}_{s}' for p in PARTIES for s in ('votes','pct')]
+REQUIRED = {'RaceID', 'RaceName', 'AreaNum', 'CandidateID', 'CandidateName',
+            'PartyCode', 'CandidateVotes', 'PrecinctsReporting'}
+PARTIES = ('rep', 'dem', 'lib', 'lmn', 'nwp', 'afp', 'ind', 'oth')
 
-def write_csv(path, fields, rows):
+
+def write_csv(path, columns, records):
     path.parent.mkdir(parents=True, exist_ok=True)
     buf = io.StringIO(newline='')
-    writer = csv.DictWriter(buf, fieldnames=fields, extrasaction='ignore', lineterminator='\n')
+    writer = csv.DictWriter(buf, fieldnames=columns, lineterminator='\n', extrasaction='ignore')
     writer.writeheader()
-    writer.writerows(rows)
+    writer.writerows(records)
     content = buf.getvalue()
     if not path.exists() or path.read_text(encoding='utf-8') != content:
         path.write_text(content, encoding='utf-8')
 
-def reporting(raw):
-    match = re.search(r'(\d+)\s*/\s*(\d+)', raw or '')
-    if not match:
-        return None, None, None
-    done, total = map(int, match.groups())
-    if total <= 0 or done > total:
-        raise ValueError('Invalid precinct reporting: ' + str(raw))
-    return done, total, round(100 * done / total, 1)
 
-def read_source(data):
-    reader = csv.DictReader(io.StringIO(data.decode('utf-8-sig')))
-    if not reader.fieldnames or not REQUIRED.issubset(reader.fieldnames):
-        raise ValueError('Missing Nebraska CSV fields; refusing to overwrite feeds')
-    rows = []
+def parse(raw):
+    reader = csv.DictReader(io.StringIO(raw.decode('utf-8-sig')))
+    columns = reader.fieldnames
+    if not columns or not REQUIRED.issubset(columns):
+        raise ValueError('Missing required Nebraska CSV columns')
+    records = []
     for row in reader:
         if not row.get('RaceID') or not row.get('CandidateID'):
             continue
-        row = {k: (v or '').strip() for k,v in row.items() if k is not None}
-        row['CandidateVotes'] = int(row['CandidateVotes'].replace(',', ''))
-        if row['CandidateVotes'] < 0:
-            raise ValueError('Negative vote count')
-        reporting(row['PrecinctsReporting'])
-        rows.append(row)
-    if not rows:
-        raise ValueError('No candidate records')
-    return rows
+        if int((row.get('CandidateVotes') or '0').replace(',', '')) < 0:
+            raise ValueError('Negative vote total')
+        records.append(row)
+    if not records:
+        raise ValueError('No candidate records in source')
+    return columns, records
 
-def results(rows, config, out):
+
+def build(columns, records, config, root):
+    feeds = root / 'feeds'
     groups = defaultdict(list)
-    for row in rows:
+    for row in records:
         groups[row['RaceID']].append(row)
+    write_csv(feeds / 'all-contests.csv', columns, records)
     manifest = []
     for slug, race_id in config['candidate_races'].items():
-        group = groups.get(str(race_id))
-        if not group:
-            raise ValueError(f'Configured race {race_id} ({slug}) missing from source')
-        total = sum(r['CandidateVotes'] for r in group)
-        display = []
-        for r in group:
-            _, _, pct_reporting = reporting(r['PrecinctsReporting'])
-            display.append({'Candidate':' '.join(r['CandidateName'].split()),
-                'Party':PARTY_NAMES.get(r['PartyCode'], r['PartyCode'] or 'Unknown'),
-                'Votes':r['CandidateVotes'], 'Vote %':round(100*r['CandidateVotes']/total, 1) if total else '',
-                'Precincts reporting %':pct_reporting if pct_reporting is not None else '',
-                'Last updated':r['CurrentDateTime'], 'Race ID':race_id, 'Candidate ID':r['CandidateID']})
-        display.sort(key=lambda r: (-r['Votes'], r['Candidate']))
-        write_csv(out/'feeds'/f'{slug}.csv', CANDIDATE_COLUMNS, display)
-        manifest.append({'slug':slug, 'race_id':race_id, 'title':group[0]['RaceName'],
-                         'feed':f'feeds/{slug}.csv', 'has_results':bool(total)})
+        subset = groups.get(str(race_id))
+        if not subset:
+            raise ValueError(f'Missing configured race {slug}: {race_id}')
+        write_csv(feeds / f'{slug}.csv', columns, subset)
+        manifest.append({'slug': slug, 'race_id': str(race_id), 'race_name': subset[0]['RaceName'], 'feed': f'feeds/{slug}.csv'})
     measures = []
     for race_id in config['ballot_measure_ids']:
-        group = groups.get(str(race_id))
-        if not group:
-            raise ValueError(f'Configured ballot measure {race_id} missing from source')
-        choices = {}
-        for r in group:
-            name = ' '.join(r['CandidateName'].split()).lower()
-            if name in ('for','yes','against','no'):
-                key = 'for' if name in ('for','yes') else 'against'
-                if key in choices:
-                    raise ValueError(f'Duplicate ballot choice {key} for {race_id}')
-                choices[key] = r['CandidateVotes']
-        if set(choices) != {'for','against'}:
-            raise ValueError(f'Unknown ballot choice labels for {race_id}: {[r["CandidateName"] for r in group]}')
-        yes, no = choices['for'], choices['against']
-        total = yes + no
-        _, _, report_pct = reporting(group[0]['PrecinctsReporting'])
-        measures.append({'Ballot measure':group[0]['RaceName'],
-            'For %':round(100*yes/total, 1) if total else '',
-            'Against %':round(100*no/total, 1) if total else '',
-            'For votes':yes, 'Against votes':no, 'Total votes':total,
-            'Precincts reporting %':report_pct if report_pct is not None else '',
-            'Last updated':group[0]['CurrentDateTime'], 'Has results':'yes' if total else 'no'})
-    write_csv(out/'feeds'/'ballot-measures.csv', MEASURE_COLUMNS, measures)
+        subset = groups.get(str(race_id))
+        if not subset:
+            raise ValueError(f'Missing ballot measure {race_id}')
+        measures.extend(subset)
+    write_csv(feeds / 'ballot-measures.csv', columns, measures)
+
+    # Compatibility exception: the existing congressional choropleth needs one row per district.
+    congress_columns = ['district_keys', 'district', 'race_id', 'total_votes', 'precincts_reporting',
+                        'precincts_total', 'source_updated', 'has_results'] + [f'{p}_{suffix}' for p in PARTIES for suffix in ('votes', 'pct')]
     congress = []
-    for district in range(1,4):
+    for district in (1, 2, 3):
         race_id = str(config['candidate_races'][f'house-{district}'])
-        group = groups[race_id]
-        total = sum(r['CandidateVotes'] for r in group)
-        counts = {p:0 for p in PARTIES}
-        for r in group:
-            code = r['PartyCode']
-            # Petition candidates remain in Other for the legacy map, not automatically Independent.
-            counts[code if code in counts else 'OTH'] += r['CandidateVotes']
-        done, n, report_pct = reporting(group[0]['PrecinctsReporting'])
-        row = {'district_keys':district, 'district':f'NE-{district:02d}', 'race_id':race_id,
-               'total_votes':total, 'precincts_reporting':done if done is not None else '',
-               'precincts_total':n if n is not None else '',
-               'source_updated':group[0]['CurrentDateTime'], 'has_results':'yes' if total else 'no'}
+        subset = groups[race_id]
+        total = sum(int((r['CandidateVotes'] or '0').replace(',', '')) for r in subset)
+        counts = {p: 0 for p in PARTIES}
+        for r in subset:
+            code = (r['PartyCode'] or '').lower()
+            counts[code if code in counts else 'oth'] += int((r['CandidateVotes'] or '0').replace(',', ''))
+        import re
+        match = re.search(r'(\d+)\s*/\s*(\d+)', subset[0].get('PrecinctsReporting') or '')
+        done, all_precincts = (int(match.group(1)), int(match.group(2))) if match else ('', '')
+        entry = {'district_keys': district, 'district': f'NE-{district:02d}', 'race_id': race_id,
+                 'total_votes': total, 'precincts_reporting': done, 'precincts_total': all_precincts,
+                 'source_updated': subset[0]['CurrentDateTime'], 'has_results': 'yes' if total else 'no'}
         for party in PARTIES:
-            row[f'{party.lower()}_votes'] = counts[party]
-            row[f'{party.lower()}_pct'] = round(100*counts[party]/total, 3) if total else 0
-        congress.append(row)
-    write_csv(out/'feeds'/'congress.csv', CONGRESS_COLUMNS, congress)
-    (out/'feeds').mkdir(parents=True, exist_ok=True)
-    manifest_path = out/'feeds'/'index.json'
-    manifest_content = json.dumps(manifest, indent=2) + '\n'
-    if not manifest_path.exists() or manifest_path.read_text() != manifest_content:
-        manifest_path.write_text(manifest_content)
-    return len(groups), len(measures)
+            entry[f'{party}_votes'] = counts[party]
+            entry[f'{party}_pct'] = round(100 * counts[party] / total, 3) if total else 0
+        congress.append(entry)
+    write_csv(feeds / 'congress.csv', congress_columns, congress)
+    index = feeds / 'index.json'
+    content = json.dumps(manifest, indent=2) + '\n'
+    if not index.exists() or index.read_text(encoding='utf-8') != content:
+        index.write_text(content, encoding='utf-8')
+    print(f'OK: {len(records)} source rows; {len(manifest)} candidate feeds; {len(config["ballot_measure_ids"])} ballot measures; congress map preserved')
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input', help='Local Nebraska CSV for testing (no network)')
+    parser.add_argument('--input', help='Local CSV for testing')
     parser.add_argument('--output', default='public')
     parser.add_argument('--config', default='config/races.json')
     args = parser.parse_args()
     if args.input:
         raw = Path(args.input).read_bytes()
     else:
-        request = urllib.request.Request(SOURCE, headers={'User-Agent':'NebraskaElectionResults/1.0', 'Accept':'text/csv,*/*'})
+        request = urllib.request.Request(SOURCE, headers={'User-Agent': 'NebraskaElectionResults/1.0', 'Accept': 'text/csv,*/*'})
         with urllib.request.urlopen(request, timeout=45) as response:
             raw = response.read(10_000_001)
         if len(raw) > 10_000_000:
             raise ValueError('Oversized source response')
-    rows = read_source(raw)
-    output = Path(args.output)
+    columns, records = parse(raw)
     config = json.loads(Path(args.config).read_text(encoding='utf-8'))
-    races, measures = results(rows, config, output)
-    digest = hashlib.sha256(raw).hexdigest()
-    # Snapshots are opt-in; avoid ballooning the Git repository on election night.
-    if __import__('os').environ.get('SAVE_SNAPSHOTS') == '1':
-        snapshot = output/'snapshots'/f'{digest[:20]}.csv'
-        snapshot.parent.mkdir(parents=True, exist_ok=True)
-        if not snapshot.exists():
-            snapshot.write_bytes(raw)
-    print(f'OK: {len(rows)} candidate records; {races} source races; {measures} measures; 3 congressional districts')
+    build(columns, records, config, Path(args.output))
+
 
 if __name__ == '__main__':
     main()

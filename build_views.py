@@ -6,6 +6,36 @@ from pathlib import Path
 
 TEMPLATES = {'candidate_bars', 'results_table', 'ballot_measure', 'retention', 'leader_map'}
 
+# Human-readable labels are additive; existing CSV headers remain unchanged.
+PARTY_NAMES = {
+    'REP': 'Republican', 'DEM': 'Democratic', 'LIB': 'Libertarian',
+    'LMN': 'Legal Marijuana NOW', 'NWP': 'Nebraska Working People',
+    'AFP': 'America First', 'IND': 'Independent', 'OTH': 'Other',
+    'PET': 'Petition',
+}
+DISPLAY_LABELS = {
+    'race_id': 'Race ID', 'race_name': 'Race', 'template': 'Chart type',
+    'candidate_name': 'Candidate', 'party_code': 'Party code',
+    'party_name': 'Party', 'votes': 'Votes', 'pct': 'Vote %',
+    'rank': 'Rank', 'total_votes': 'Total votes',
+    'has_results': 'Has results', 'precincts_reporting': 'Precincts reporting',
+    'precincts_total': 'Total precincts', 'source_updated': 'Last updated',
+    'measure': 'Ballot measure', 'for_pct': 'For %',
+    'against_pct': 'Against %', 'for_votes': 'For votes',
+    'against_votes': 'Against votes',
+}
+
+def write_display(path, fields, rows):
+    display_fields = [DISPLAY_LABELS.get(f, f) for f in fields]
+    if len(set(display_fields)) != len(display_fields):
+        raise ValueError('Duplicate display column labels')
+    display_rows = [
+        {DISPLAY_LABELS.get(f, f): row.get(f, '') for f in fields}
+        for row in rows
+    ]
+    write(path, display_fields, display_rows)
+
+
 def read(path):
     with path.open(newline='', encoding='utf-8-sig') as f:
         return list(csv.DictReader(f))
@@ -61,11 +91,14 @@ def build(public, config):
         rows=[]
         for i,c in enumerate(candidates,1):
             rows.append({**base, 'candidate_name':c['candidate_name'], 'party_code':c['party_code'],
+                         'party_name':PARTY_NAMES.get(c['party_code'], c['party_code'] or 'Not specified'),
                          'votes':c['votes'], 'pct':c['pct'] if total else '',
                          'rank':i if total else '', 'precincts_reporting':c['precincts_reporting'],
                          'precincts_total':c['precincts_total'], 'source_updated':c['source_updated']})
         out = f'views/{template}/{rid}.csv'
-        write(feeds / out, ['race_id','race_name','template','candidate_name','party_code','votes','pct','rank','total_votes','has_results','precincts_reporting','precincts_total','source_updated'],rows)
+        fields = ['race_id','race_name','template','candidate_name','party_code','party_name','votes','pct','rank','total_votes','has_results','precincts_reporting','precincts_total','source_updated']
+        write(feeds / out, fields, rows)
+        write_display(feeds / 'display' / template / f'{rid}.csv', fields, rows)
         index.append({'race_id':rid,'race_name':base['race_name'],'area_type':race['area_type'],
                       'area_num':race['area_num'],'template':template,'feed_path':'feeds/'+out,
                       'total_votes':total,'has_results':base['has_results'],
@@ -107,10 +140,10 @@ def build(public, config):
             'source_updated': positive['source_updated'],
             'has_results': 'yes' if total else 'no',
         })
-    write(feeds / 'views' / 'ballot_measure' / 'all-measures.csv',
-          ['race_id','measure','for_pct','against_pct','for_votes','against_votes',
-           'total_votes','precincts_reporting','precincts_total','source_updated','has_results'],
-          combined)
+    ballot_fields = ['race_id','measure','for_pct','against_pct','for_votes','against_votes',
+                     'total_votes','precincts_reporting','precincts_total','source_updated','has_results']
+    write(feeds / 'views' / 'ballot_measure' / 'all-measures.csv', ballot_fields, combined)
+    write_display(feeds / 'display' / 'ballot_measure' / 'all-measures.csv', ballot_fields, combined)
     print(f'Built combined ballot-measure feed with {len(combined)} contests')
     write(feeds / 'visualization_index.csv', ['race_id','race_name','area_type','area_num','template','feed_path','total_votes','has_results','leader_name','leader_party','priority','chart_id'], index)
     print(f'Built {len(index)} visualization feeds; existing congress.csv untouched')

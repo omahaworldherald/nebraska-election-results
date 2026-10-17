@@ -51,6 +51,17 @@ def precincts(value):
     return (int(match.group(1)), int(match.group(2))) if match else (None,None)
 
 
+
+def reporting_percentage(reported, total):
+    """Return a one-decimal percentage or blank for unavailable denominators."""
+    try:
+        reported, total = int(reported), int(total)
+        if total <= 0 or reported < 0 or reported > total:
+            return ''
+        return round(100 * reported / total, 1)
+    except (ValueError, TypeError):
+        return ''
+
 def normalize_party(code):
     # PET = petition; classification not assumed independent.
     return code if code in PARTIES else 'OTH'
@@ -62,7 +73,7 @@ def produce(rows, root):
     for r in rows:
         by_race.setdefault(r['RaceID'], []).append(r)
     catalog = []
-    candidate_fields = ['race_id','race_name','area_type','area_num','candidate_id','candidate_name','party_code','party_group','votes','pct','total_votes','precincts_reporting','precincts_total','source_updated']
+    candidate_fields = ['race_id','race_name','area_type','area_num','candidate_id','candidate_name','party_code','party_group','votes','pct','total_votes','precincts_reporting','precincts_total','reporting_pct','source_updated']
     for rid, group in sorted(by_race.items(), key=lambda item: int(item[0])):
         total = sum(r['CandidateVotes'] for r in group)
         out = []
@@ -72,7 +83,7 @@ def produce(rows, root):
                 'candidate_id':r['CandidateID'],'candidate_name':' '.join(r['CandidateName'].split()),
                 'party_code':r['PartyCode'],'party_group':normalize_party(r['PartyCode']),
                 'votes':r['CandidateVotes'],'pct':round(100*r['CandidateVotes']/total,3) if total else 0,
-                'total_votes':total,'precincts_reporting':reported,'precincts_total':precinct_total,
+                'total_votes':total,'precincts_reporting':reported,'precincts_total':precinct_total,'reporting_pct':reporting_percentage(reported, precinct_total),
                 'source_updated':r['CurrentDateTime']})
         csv_write(feeds/'races'/f'{rid}.csv',out,candidate_fields)
         catalog.append({'race_id':rid,'race_name':group[0]['RaceName'],'area_type':group[0]['AreaType'],
@@ -91,14 +102,14 @@ def produce(rows, root):
         if not number:
             raise ValueError('Unexpected congressional area identifier')
         record = {'district_keys':str(int(number.group())),'district':f'NE-{int(number.group()):02d}','race_id':group[0]['RaceID'],
-                  'total_votes':total,'precincts_reporting':reporting,'precincts_total':precinct_total,
+                  'total_votes':total,'precincts_reporting':reporting,'precincts_total':precinct_total,'reporting_pct':reporting_percentage(reporting, precinct_total),
                   'source_updated':group[0]['CurrentDateTime']}
         for p in PARTIES:
             record[p.lower()+'_votes'] = party_votes[p]
             record[p.lower()+'_pct'] = round(100*party_votes[p]/total,3) if total else 0
         record['has_results'] = 'yes' if total else 'no'
         wide.append(record)
-    wide_fields = ['district_keys','district','race_id','total_votes','precincts_reporting','precincts_total','source_updated','has_results'] + [f'{p.lower()}_{suffix}' for p in PARTIES for suffix in ('votes','pct')]
+    wide_fields = ['district_keys','district','race_id','total_votes','precincts_reporting','precincts_total','reporting_pct','source_updated','has_results'] + [f'{p.lower()}_{suffix}' for p in PARTIES for suffix in ('votes','pct')]
     csv_write(feeds/'congress.csv',wide,wide_fields)
     # Convenience feeds for named statewide contests, based on area type and race name.
     for label,term in [('senate','united states senator'),('governor','governor')]:

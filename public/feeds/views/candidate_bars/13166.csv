@@ -1,4 +1,4 @@
-race_id,race_name,template,candidate_name,party_code,party_name,votes,pct,rank,total_votes,has_results,precincts_reporting,precincts_total,source_updated
-13166,U.S. House District 2,candidate_bars,Brinker Harding,REP,Republican,0,,,0,no,0,334,10/17/2026 4:44:04 PM
-13166,U.S. House District 2,candidate_bars,Denise Powell,DEM,Democratic,0,,,0,no,0,334,10/17/2026 4:44:04 PM
-13166,U.S. House District 2,candidate_bars,Eric Michael Foreman,LIB,Libertarian,0,,,0,no,0,334,10/17/2026 4:44:04 PM
+race_id,race_name,template,candidate_name,party_code,party_name,votes,pct,rank,total_votes,has_results,precincts_reporting,precincts_total,reporting_pct,source_updated
+13166,U.S. House District 2,candidate_bars,Brinker Harding,REP,Republican,0,,,0,no,0,334,0.0,10/17/2026 4:49:03 PM
+13166,U.S. House District 2,candidate_bars,Denise Powell,DEM,Democratic,0,,,0,no,0,334,0.0,10/17/2026 4:49:03 PM
+13166,U.S. House District 2,candidate_bars,Eric Michael Foreman,LIB,Libertarian,0,,,0,no,0,334,0.0,10/17/2026 4:49:03 PM

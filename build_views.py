@@ -19,11 +19,22 @@ DISPLAY_LABELS = {
     'party_name': 'Party', 'votes': 'Votes', 'pct': 'Vote %',
     'rank': 'Rank', 'total_votes': 'Total votes',
     'has_results': 'Has results', 'precincts_reporting': 'Precincts reporting',
-    'precincts_total': 'Total precincts', 'source_updated': 'Last updated',
+    'precincts_total': 'Total precincts', 'reporting_pct': 'Precincts reporting %', 'source_updated': 'Last updated',
     'measure': 'Ballot measure', 'for_pct': 'For %',
     'against_pct': 'Against %', 'for_votes': 'For votes',
     'against_votes': 'Against votes',
 }
+
+
+def reporting_percentage(reported, total):
+    """Return a one-decimal percentage or blank for unavailable denominators."""
+    try:
+        reported, total = int(reported), int(total)
+        if total <= 0 or reported < 0 or reported > total:
+            return ''
+        return round(100 * reported / total, 1)
+    except (ValueError, TypeError):
+        return ''
 
 def write_display(path, fields, rows):
     display_fields = [DISPLAY_LABELS.get(f, f) for f in fields]
@@ -94,9 +105,9 @@ def build(public, config):
                          'party_name':PARTY_NAMES.get(c['party_code'], c['party_code'] or 'Not specified'),
                          'votes':c['votes'], 'pct':c['pct'] if total else '',
                          'rank':i if total else '', 'precincts_reporting':c['precincts_reporting'],
-                         'precincts_total':c['precincts_total'], 'source_updated':c['source_updated']})
+                         'precincts_total':c['precincts_total'], 'reporting_pct':reporting_percentage(c['precincts_reporting'], c['precincts_total']), 'source_updated':c['source_updated']})
         out = f'views/{template}/{rid}.csv'
-        fields = ['race_id','race_name','template','candidate_name','party_code','party_name','votes','pct','rank','total_votes','has_results','precincts_reporting','precincts_total','source_updated']
+        fields = ['race_id','race_name','template','candidate_name','party_code','party_name','votes','pct','rank','total_votes','has_results','precincts_reporting','precincts_total','reporting_pct','source_updated']
         write(feeds / out, fields, rows)
         write_display(feeds / 'display' / template / f'{rid}.csv', fields, rows)
         index.append({'race_id':rid,'race_name':base['race_name'],'area_type':race['area_type'],
@@ -137,11 +148,12 @@ def build(public, config):
             'total_votes': total,
             'precincts_reporting': positive['precincts_reporting'],
             'precincts_total': positive['precincts_total'],
+            'reporting_pct':reporting_percentage(positive['precincts_reporting'], positive['precincts_total']),
             'source_updated': positive['source_updated'],
             'has_results': 'yes' if total else 'no',
         })
     ballot_fields = ['race_id','measure','for_pct','against_pct','for_votes','against_votes',
-                     'total_votes','precincts_reporting','precincts_total','source_updated','has_results']
+                     'total_votes','precincts_reporting','precincts_total','reporting_pct','source_updated','has_results']
     write(feeds / 'views' / 'ballot_measure' / 'all-measures.csv', ballot_fields, combined)
     write_display(feeds / 'display' / 'ballot_measure' / 'all-measures.csv', ballot_fields, combined)
     print(f'Built combined ballot-measure feed with {len(combined)} contests')

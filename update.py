@@ -4,6 +4,7 @@ import argparse
 import csv
 import io
 import json
+import re
 import urllib.request
 from collections import defaultdict
 from pathlib import Path
@@ -42,7 +43,70 @@ def parse(raw):
     return columns, records
 
 
-def build(columns, records, config, root):
+
+def clean_name(value):
+    """Collapse repeated spaces, including nonbreaking spaces, without changing spelling."""
+    return ' '.join((value or '').split())
+
+
+def read_calls(path):
+    if not path.exists():
+        return {}
+    calls = {}
+    with path.open(newline='', encoding='utf-8-sig') as file:
+        for row in csv.DictReader(file):
+            race_id = (row.get('race_id') or '').strip()
+            candidate_id = (row.get('candidate_id') or '').strip()
+            status = (row.get('status') or '').strip().lower()
+            if not race_id and not candidate_id and not status:
+                continue
+            if status not in ('called', 'retracted'):
+                raise ValueError(f'Invalid race-call status for {race_id}: {status}')
+            if not race_id:
+                raise ValueError('Race call is missing race_id')
+            if status == 'called' and not candidate_id:
+                raise ValueError(f'Called race {race_id} is missing candidate_id')
+            if race_id in calls:
+                raise ValueError(f'Duplicate race call entry: {race_id}')
+            calls[race_id] = candidate_id if status == 'called' else None
+    return calls
+
+
+def display_rows(subset, race_id, calls):
+    selected = calls.get(str(race_id))
+    candidate_ids = {r['CandidateID'].strip() for r in subset}
+    if selected and selected not in candidate_ids:
+        raise ValueError(f'Called candidate {selected} not found in race {race_id}')
+    # Do not permit an accidental call on a contest with no votes reported.
+    if selected and not any(int((r.get('CandidateVotes') or '0').replace(',', '')) > 0 for r in subset):
+        raise ValueError(f'Race {race_id} has zero votes; remove the call until results are available')
+    result = []
+    for row in subset:
+        name = clean_name(row['CandidateName'])
+        party = (row.get('PartyCode') or '').strip().upper()
+        label = f'{name} ({party})' if party else name
+        is_called = bool(selected and row['CandidateID'].strip() == selected)
+        if is_called:
+            label = '✓ ' + label
+        match = re.search(r'(\d+)\s*/\s*(\d+)', row.get('PrecinctsReporting') or '')
+        reporting = round(100 * int(match.group(1)) / int(match.group(2)), 1) if match and int(match.group(2)) else ''
+        votes = int((row.get('CandidateVotes') or '0').replace(',', ''))
+        pct = (row.get('CandidatePercentage') or '').strip().replace('%', '')
+        try:
+            pct = round(float(pct), 1) if pct else ''
+        except ValueError:
+            pct = ''
+        result.append({'Candidate': label, 'Votes': votes, 'Pct.': pct,
+                       'Precincts Reporting': reporting, 'Called': 'Yes' if is_called else 'No'})
+    return result
+
+
+def write_display(feeds, slug, subset, race_id, calls):
+    columns = ['Candidate', 'Votes', 'Pct.', 'Precincts Reporting', 'Called']
+    write_csv(feeds / 'display' / f'{slug}.csv', columns, display_rows(subset, race_id, calls))
+
+
+def build(columns, records, config, root, calls):
     feeds = root / 'feeds'
     groups = defaultdict(list)
     for row in records:
@@ -54,6 +118,7 @@ def build(columns, records, config, root):
         if not subset:
             raise ValueError(f'Missing configured race {slug}: {race_id}')
         write_csv(feeds / f'{slug}.csv', columns, subset)
+        write_display(feeds, slug, subset, race_id, calls)
         manifest.append({'slug': slug, 'race_id': str(race_id), 'race_name': subset[0]['RaceName'], 'feed': f'feeds/{slug}.csv'})
     measures = []
     for race_id in config['ballot_measure_ids']:
@@ -62,6 +127,8 @@ def build(columns, records, config, root):
             raise ValueError(f'Missing ballot measure {race_id}')
         measures.extend(subset)
     write_csv(feeds / 'ballot-measures.csv', columns, measures)
+    for race_id in config['ballot_measure_ids']:
+        write_display(feeds, f'measure-{race_id}', groups[str(race_id)], race_id, calls)
 
     # Compatibility exception: the existing congressional choropleth needs one row per district.
     congress_columns = ['district_keys', 'district', 'race_id', 'total_votes', 'precincts_reporting',
@@ -98,6 +165,7 @@ def main():
     parser.add_argument('--input', help='Local CSV for testing')
     parser.add_argument('--output', default='public')
     parser.add_argument('--config', default='config/races.json')
+    parser.add_argument('--calls', default='config/race-calls.csv')
     args = parser.parse_args()
     if args.input:
         raw = Path(args.input).read_bytes()
@@ -109,7 +177,8 @@ def main():
             raise ValueError('Oversized source response')
     columns, records = parse(raw)
     config = json.loads(Path(args.config).read_text(encoding='utf-8'))
-    build(columns, records, config, Path(args.output))
+    calls = read_calls(Path(args.calls))
+    build(columns, records, config, Path(args.output), calls)
 
 
 if __name__ == '__main__':

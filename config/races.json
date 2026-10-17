@@ -1,0 +1,10 @@
+{
+  "candidate_races": {
+    "senate": "13224",
+    "governor": "13508",
+    "house-1": "13165",
+    "house-2": "13166",
+    "house-3": "13167"
+  },
+  "ballot_measure_ids": ["2624", "2626", "2627", "2628"]
+}

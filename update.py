@@ -72,7 +72,7 @@ def read_calls(path):
     return calls
 
 
-def display_rows(subset, race_id, calls):
+def display_rows(subset, race_id, calls, governor=False):
     selected = calls.get(str(race_id))
     candidate_ids = {r['CandidateID'].strip() for r in subset}
     if selected and selected not in candidate_ids:
@@ -83,6 +83,9 @@ def display_rows(subset, race_id, calls):
     result = []
     for row in subset:
         name = clean_name(row['CandidateName'])
+        if governor:
+            # Governor/Lt. Governor ticket: show only the governor's name.
+            name = re.split(r'\s+and\s+', name, maxsplit=1, flags=re.IGNORECASE)[0]
         party = (row.get('PartyCode') or '').strip().upper()
         label = f'{name} ({party})' if party else name
         is_called = bool(selected and row['CandidateID'].strip() == selected)
@@ -103,7 +106,7 @@ def display_rows(subset, race_id, calls):
 
 def write_display(feeds, slug, subset, race_id, calls):
     columns = ['Candidate', 'Votes', 'Pct.', 'Precincts Reporting', 'Called']
-    write_csv(feeds / 'display' / f'{slug}.csv', columns, display_rows(subset, race_id, calls))
+    write_csv(feeds / 'display' / f'{slug}.csv', columns, display_rows(subset, race_id, calls, governor=(slug == 'governor')))
 
 
 def build(columns, records, config, root, calls):

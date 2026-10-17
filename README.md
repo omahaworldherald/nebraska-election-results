@@ -1,61 +1,35 @@
-# Nebraska Election Results — simple GitHub edition
+# Nebraska Election Feeds — Passthrough
 
-**One source, one Python script, one GitHub workflow. No API token needed.**
+One Python script downloads Nebraska's All Contests CSV and splits it by race ID. It does **not** rename or recalculate source columns in the split feeds.
 
-## Source
+## Files to install
 
-`https://electionresults.nebraska.gov/resultsCSV.aspx?text=All&type=All&map=CTY`
+- `update.py` — replace the previous simple-edition script.
+- `config/races.json` — same configuration format as before; no changes required if your existing race IDs are correct.
+- `.github/workflows/update.yml` — same scheduled workflow; no changes required if it already runs successfully.
 
-The script is tested against the provided pre-election `Media (6).csv` fixture (625 candidate rows, 463 races). The live endpoint and Datawrapper live-refresh behavior have **not** been tested here. This is a pilot, not an election-night production guarantee.
+## Generated files
 
-## Install
+- `public/feeds/all-contests.csv`: complete official export, with original column headers.
+- `public/feeds/senate.csv`, `governor.csv`, `house-1.csv`, `house-2.csv`, `house-3.csv`: filtered official rows, unchanged columns.
+- `public/feeds/ballot-measures.csv`: official rows for all four configured measures, unchanged columns (eight candidate/choice rows).
+- `public/feeds/congress.csv`: **the one exception**, a three-row wide-format file for the existing Datawrapper congressional choropleth, including `district_keys`.
+- `public/feeds/index.json`: a small directory of configured candidate feeds.
 
-1. Make a **new public GitHub repository** (recommended for a clean restart). Upload `update.py`, `config/races.json`, and `.gitignore`. Do **not** upload `test-output/`.
-2. Add `.github/workflows/update.yml` through GitHub's **Add file → Create new file** and paste the contents (the dot-prefixed `.github` folder may be hidden on Mac).
-3. Open **Actions → Update Nebraska election feeds → Run workflow**. Workflow grants `contents: write` via YAML. If your organization restricts writes, an administrator must allow them.
-4. Confirm `public/feeds/congress.csv`, `public/feeds/ballot-measures.csv`, and the candidate CSVs appear in the repo.
-5. Connect each Datawrapper chart to its public raw CSV URL:
-   `https://raw.githubusercontent.com/OWNER/REPO/main/public/feeds/ballot-measures.csv`
-   Replace `OWNER` and `REPO` with yours. Use the **Raw** URL, not GitHub's `blob` page.
-6. Configure charts manually in Datawrapper and verify their external-data refresh settings. Do not publish zero-vote charts as real results.
+## Installation
 
-## Outputs
+If you already use the simple-edition GitHub repo, replace only `update.py`. The existing `config/races.json` and workflow still work. Commit the change, then run **Actions → Update Nebraska election feeds → Run workflow**.
 
-- `public/feeds/senate.csv`
-- `public/feeds/governor.csv`
-- `public/feeds/house-1.csv`, `house-2.csv`, `house-3.csv`
-- `public/feeds/ballot-measures.csv` (wide columns: Ballot measure, For %, Against %, For votes, Against votes, Total votes, Precincts reporting %, Last updated, Has results)
-- `public/feeds/congress.csv` (legacy-compatible column names, including `district_keys` 1/2/3 and party percentage columns)
-- `public/feeds/index.json` (simple catalog)
+For a fresh repo, upload `update.py` and `config/races.json`, then create `.github/workflows/update.yml` directly on GitHub.
 
-**Existing repository users:** This is a new feed layout. `public/feeds/congress.csv` keeps its old header names and map keys, but the *other* legacy feed URLs and schemas are not guaranteed compatible. To avoid disrupting published charts, use a new repo and move embeds only after verifying them. The converter does not delete older files if you run it in the old repo, so stale files can remain there.
+## Testing locally
 
-## Edit the races
+```bash
+python update.py --input "Media (6).csv" --output public
+```
 
-Edit only `config/races.json` to change the five candidate-race IDs or four ballot-measure IDs. Race IDs may change for future election cycles. The script fails rather than silently publishing an empty file if a configured race is absent.
+## Datawrapper note
 
-## Datawrapper settings
+These are raw, long-format results. Candidate charts can use `CandidateName`, `CandidateVotes`, and `CandidatePercentage`. Ballot measures contain **two rows per measure**, not a wide-format stacked-bar dataset. To show all four ballot measures in one 100% stacked chart, you would need an additional transformed feed or a different Datawrapper chart design. The congressional map continues to use `congress.csv`.
 
-- Candidate bars: category `Candidate`; value `Vote %`. `Votes` remains in the CSV for a results table; standard bars do not have customizable vote-count tooltips. For a vote-count display use a table or surrounding page text.
-- Ballot measures: category `Ballot measure`; series `For %` and `Against %`; stacked bars, 0–100 axis. Both percentages remain empty until votes arrive.
-- Congressional choropleth: match Datawrapper `Code (1,2,3)` with `district_keys`; select e.g. `rep_pct` for shading. It is a party-share map, not a leading-party map.
-- `Precincts reporting %` and `Last updated` are feed columns. They do **not** automatically become a Datawrapper footer. Show them in a table, or on a separately built results page; avoid claiming a live footer without implementing it.
-
-## Test locally
-
-From the project directory:
-
-`python update.py --input '/path/to/Media (6).csv' --output public`
-
-The converter uses Python standard library only. A local sample is included under `sample-output/` for inspection. All source votes were zero in the supplied fixture; no fictional votes are injected.
-
-## Operational safeguards and limits
-
-- Runs every 5 minutes **on a best-effort basis**; GitHub Actions can delay or skip scheduled runs. Datawrapper's external-data refresh interval is separate and may vary with chart settings and publication age.
-- Download/format errors stop the workflow before committing; previously committed feeds remain available. No automatic alerts are configured.
-- Source reporting is computed as reported/total precincts, rounded to one decimal. If precinct counts are missing, reporting percentage is blank.
-- The official source timestamp is preserved as supplied. Do not assume it has an explicit time-zone offset.
-- Election-night data is unofficial. The tool makes no race calls, does not certify results and does not infer winners from zero votes.
-- For a historical archive, enable `SAVE_SNAPSHOTS=1` in the workflow environment *only after planning storage/retention*. Default is off to keep the Git repo small.
-- `map=CTY` is a contest-level export in the supplied sample. County-by-county map data requires separately verifying the geographic export.
-- GitHub raw CSV files are publicly accessible. No secrets or private records belong in them.
+All source records are unofficial until certified by the state. Do not publish the zero-vote pre-election export as reported results.

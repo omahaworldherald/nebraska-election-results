@@ -1,6 +1,6 @@
 
 #!/usr/bin/env python3
-"""Split Nebraska's official All Contests CSV without changing source fields."""
+"""Split Nebraska's official All Contests CSV into election result feeds."""
 
 import argparse
 import csv
@@ -11,33 +11,49 @@ import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
-SOURCE = 'https://electionresults.nebraska.gov/resultsCSV.aspx?text=All&type=All&map=CTY'
+SOURCE = (
+    'https://electionresults.nebraska.gov/'
+    'resultsCSV.aspx?text=All&type=All&map=CTY'
+)
 
 REQUIRED = {
-    'RaceID', 'RaceName', 'AreaNum', 'CandidateID',
-    'CandidateName', 'PartyCode', 'CandidateVotes',
+    'RaceID',
+    'RaceName',
+    'AreaNum',
+    'CandidateID',
+    'CandidateName',
+    'PartyCode',
+    'CandidateVotes',
     'PrecinctsReporting'
 }
 
-PARTIES = ('rep', 'dem', 'lib', 'lmn', 'nwp', 'afp', 'ind', 'oth')
+PARTIES = (
+    'rep', 'dem', 'lib', 'lmn',
+    'nwp', 'afp', 'ind', 'oth'
+)
 
 
 def write_csv(path, columns, records):
     path.parent.mkdir(parents=True, exist_ok=True)
 
     buf = io.StringIO(newline='')
+
     writer = csv.DictWriter(
         buf,
         fieldnames=columns,
         lineterminator='\n',
         extrasaction='ignore'
     )
+
     writer.writeheader()
     writer.writerows(records)
 
     content = buf.getvalue()
 
-    if not path.exists() or path.read_text(encoding='utf-8') != content:
+    if (
+        not path.exists()
+        or path.read_text(encoding='utf-8') != content
+    ):
         path.write_text(content, encoding='utf-8')
 
 
@@ -49,7 +65,9 @@ def parse(raw):
     columns = reader.fieldnames
 
     if not columns or not REQUIRED.issubset(columns):
-        raise ValueError('Missing required Nebraska CSV columns')
+        raise ValueError(
+            'Missing required Nebraska CSV columns'
+        )
 
     records = []
 
@@ -58,7 +76,8 @@ def parse(raw):
             continue
 
         votes = int(
-            (row.get('CandidateVotes') or '0').replace(',', '')
+            (row.get('CandidateVotes') or '0')
+            .replace(',', '')
         )
 
         if votes < 0:
@@ -67,7 +86,9 @@ def parse(raw):
         records.append(row)
 
     if not records:
-        raise ValueError('No candidate records in source')
+        raise ValueError(
+            'No candidate records in source'
+        )
 
     return columns, records
 
@@ -83,11 +104,23 @@ def read_calls(path):
 
     calls = {}
 
-    with path.open(newline='', encoding='utf-8-sig') as file:
+    with path.open(
+        newline='',
+        encoding='utf-8-sig'
+    ) as file:
+
         for row in csv.DictReader(file):
-            race_id = (row.get('race_id') or '').strip()
-            candidate_id = (row.get('candidate_id') or '').strip()
-            status = (row.get('status') or '').strip().lower()
+            race_id = (
+                row.get('race_id') or ''
+            ).strip()
+
+            candidate_id = (
+                row.get('candidate_id') or ''
+            ).strip()
+
+            status = (
+                row.get('status') or ''
+            ).strip().lower()
 
             if not race_id and not candidate_id and not status:
                 continue
@@ -98,7 +131,9 @@ def read_calls(path):
                 )
 
             if not race_id:
-                raise ValueError('Race call is missing race_id')
+                raise ValueError(
+                    'Race call is missing race_id'
+                )
 
             if status == 'called' and not candidate_id:
                 raise ValueError(
@@ -111,7 +146,9 @@ def read_calls(path):
                 )
 
             calls[race_id] = (
-                candidate_id if status == 'called' else None
+                candidate_id
+                if status == 'called'
+                else None
             )
 
     return calls
@@ -127,12 +164,16 @@ def display_rows(subset, race_id, calls, governor=False):
 
     if selected and selected not in candidate_ids:
         raise ValueError(
-            f'Called candidate {selected} not found in race {race_id}'
+            f'Called candidate {selected} '
+            f'not found in race {race_id}'
         )
 
-    # Do not permit a call when no votes have been reported.
+    # Prevent a race call before any votes are reported.
     if selected and not any(
-        int((r.get('CandidateVotes') or '0').replace(',', '')) > 0
+        int(
+            (r.get('CandidateVotes') or '0')
+            .replace(',', '')
+        ) > 0
         for r in subset
     ):
         raise ValueError(
@@ -143,11 +184,14 @@ def display_rows(subset, race_id, calls, governor=False):
     result = []
 
     for row in subset:
-        name = clean_name(row['CandidateName'])
+        # Clean candidate name.
+        name = clean_name(
+            row['CandidateName']
+        )
 
+        # Governor/Lt. Governor ticket:
+        # Show only the governor's name.
         if governor:
-            # Governor/Lt. Governor ticket:
-            # Show only the governor's name.
             name = re.split(
                 r'\s+and\s+',
                 name,
@@ -155,22 +199,31 @@ def display_rows(subset, race_id, calls, governor=False):
                 flags=re.IGNORECASE
             )[0]
 
-        party = (row.get('PartyCode') or '').strip().upper()
+        # Convert petition candidates to Independent
+        # for display only.
+        party = (
+            row.get('PartyCode') or ''
+        ).strip().upper()
 
-        # Display all petition candidates as Independent.
         if party == 'PET':
             party = 'IND'
 
-        label = f'{name} ({party})' if party else name
+        label = (
+            f'{name} ({party})'
+            if party
+            else name
+        )
 
+        # Editorial race call.
         is_called = bool(
-            selected and row['CandidateID'].strip() == selected
+            selected
+            and row['CandidateID'].strip() == selected
         )
 
         if is_called:
             label = '✓ ' + label
 
-        # Convert precinct counts to a reporting percentage.
+        # Convert precinct counts to percentage.
         match = re.search(
             r'(\d+)\s*/\s*(\d+)',
             row.get('PrecinctsReporting') or ''
@@ -178,17 +231,22 @@ def display_rows(subset, race_id, calls, governor=False):
 
         reporting = (
             round(
-                100 * int(match.group(1)) / int(match.group(2)),
+                100
+                * int(match.group(1))
+                / int(match.group(2)),
                 1
             )
             if match and int(match.group(2))
             else ''
         )
 
+        # Raw votes.
         votes = int(
-            (row.get('CandidateVotes') or '0').replace(',', '')
+            (row.get('CandidateVotes') or '0')
+            .replace(',', '')
         )
 
+        # Candidate percentage.
         pct = (
             (row.get('CandidatePercentage') or '')
             .strip()
@@ -196,28 +254,47 @@ def display_rows(subset, race_id, calls, governor=False):
         )
 
         try:
-            pct = round(float(pct), 1) if pct else ''
+            pct = (
+                round(float(pct), 1)
+                if pct
+                else ''
+            )
         except ValueError:
             pct = ''
+
+        # Official Nebraska results timestamp.
+        last_updated = (
+            row.get('CurrentDateTime') or ''
+        ).strip()
 
         result.append({
             'Candidate': label,
             'Votes': votes,
             'Pct.': pct,
             'Precincts Reporting': reporting,
-            'Called': 'Yes' if is_called else 'No'
+            'Called': (
+                'Yes' if is_called else 'No'
+            ),
+            'Last Updated': last_updated
         })
 
     return result
 
 
-def write_display(feeds, slug, subset, race_id, calls):
+def write_display(
+    feeds,
+    slug,
+    subset,
+    race_id,
+    calls
+):
     columns = [
         'Candidate',
         'Votes',
         'Pct.',
         'Precincts Reporting',
-        'Called'
+        'Called',
+        'Last Updated'
     ]
 
     write_csv(
@@ -240,7 +317,7 @@ def build(columns, records, config, root, calls):
     for row in records:
         groups[row['RaceID']].append(row)
 
-    # Preserve the complete original Nebraska data.
+    # Preserve original Nebraska data.
     write_csv(
         feeds / 'all-contests.csv',
         columns,
@@ -249,7 +326,7 @@ def build(columns, records, config, root, calls):
 
     manifest = []
 
-    # Generate individual candidate race feeds.
+    # Candidate races.
     for slug, race_id in config['candidate_races'].items():
         subset = groups.get(str(race_id))
 
@@ -258,14 +335,14 @@ def build(columns, records, config, root, calls):
                 f'Missing configured race {slug}: {race_id}'
             )
 
-        # Original passthrough feed.
+        # Original passthrough.
         write_csv(
             feeds / f'{slug}.csv',
             columns,
             subset
         )
 
-        # Clean Datawrapper display feed.
+        # Clean display feed.
         write_display(
             feeds,
             slug,
@@ -281,7 +358,7 @@ def build(columns, records, config, root, calls):
             'feed': f'feeds/{slug}.csv'
         })
 
-    # Generate statewide ballot-measure feeds.
+    # Statewide ballot measures.
     measures = []
 
     for race_id in config['ballot_measure_ids']:
@@ -329,13 +406,18 @@ def build(columns, records, config, root, calls):
 
     for district in (1, 2, 3):
         race_id = str(
-            config['candidate_races'][f'house-{district}']
+            config['candidate_races'][
+                f'house-{district}'
+            ]
         )
 
         subset = groups[race_id]
 
         total = sum(
-            int((r['CandidateVotes'] or '0').replace(',', ''))
+            int(
+                (r['CandidateVotes'] or '0')
+                .replace(',', '')
+            )
             for r in subset
         )
 
@@ -351,12 +433,13 @@ def build(columns, records, config, root, calls):
                 .lower()
             )
 
-            # Group petition candidates with independents.
+            # Petition candidates count as Independent.
             if code == 'pet':
                 code = 'ind'
 
             votes = int(
-                (r['CandidateVotes'] or '0').replace(',', '')
+                (r['CandidateVotes'] or '0')
+                .replace(',', '')
             )
 
             counts[
@@ -369,7 +452,10 @@ def build(columns, records, config, root, calls):
         )
 
         done, all_precincts = (
-            (int(match.group(1)), int(match.group(2)))
+            (
+                int(match.group(1)),
+                int(match.group(2))
+            )
             if match
             else ('', '')
         )
@@ -384,7 +470,9 @@ def build(columns, records, config, root, calls):
             'source_updated': subset[0].get(
                 'CurrentDateTime', ''
             ),
-            'has_results': 'yes' if total else 'no'
+            'has_results': (
+                'yes' if total else 'no'
+            )
         }
 
         for party in PARTIES:
@@ -407,7 +495,7 @@ def build(columns, records, config, root, calls):
         congress
     )
 
-    # Small directory of configured races.
+    # Small index of configured races.
     index = feeds / 'index.json'
 
     content = json.dumps(
@@ -417,7 +505,9 @@ def build(columns, records, config, root, calls):
 
     if (
         not index.exists()
-        or index.read_text(encoding='utf-8') != content
+        or index.read_text(
+            encoding='utf-8'
+        ) != content
     ):
         index.write_text(
             content,
@@ -427,8 +517,8 @@ def build(columns, records, config, root, calls):
     print(
         f'OK: {len(records)} source rows; '
         f'{len(manifest)} candidate feeds; '
-        f'{len(config["ballot_measure_ids"])} ballot measures; '
-        'congress map preserved'
+        f'{len(config["ballot_measure_ids"])} '
+        'ballot measures; congress map preserved'
     )
 
 
@@ -458,14 +548,18 @@ def main():
     args = parser.parse_args()
 
     if args.input:
-        raw = Path(args.input).read_bytes()
+        raw = Path(
+            args.input
+        ).read_bytes()
 
     else:
         request = urllib.request.Request(
             SOURCE,
             headers={
-                'User-Agent': 'NebraskaElectionResults/1.0',
-                'Accept': 'text/csv,*/*'
+                'User-Agent':
+                    'NebraskaElectionResults/1.0',
+                'Accept':
+                    'text/csv,*/*'
             }
         )
 
@@ -483,13 +577,17 @@ def main():
     columns, records = parse(raw)
 
     config = json.loads(
-        Path(args.config).read_text(
+        Path(
+            args.config
+        ).read_text(
             encoding='utf-8'
         )
     )
 
     calls = read_calls(
-        Path(args.calls)
+        Path(
+            args.calls
+        )
     )
 
     build(

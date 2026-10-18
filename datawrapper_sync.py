@@ -17,6 +17,11 @@ from pathlib import Path
 BASE = 'https://api.datawrapper.de/v3'
 REQUIRED = {'Candidate', 'Votes', 'Pct.', 'Precincts Reporting', 'Called', 'Last Updated'}
 
+SOURCE_NAME = "Nebraska Secretary of State"
+SOURCE_URL = (
+    "https://electionresults.nebraska.gov/"
+    "resultsCSV.aspx?text=All&type=All&map=CTY"
+)
 
 def api(method, path, token, data=None, content_type=None):
     headers = {'Authorization': f'Bearer {token}', 'Accept': 'application/json'}

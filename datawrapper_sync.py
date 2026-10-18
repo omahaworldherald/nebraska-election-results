@@ -53,7 +53,7 @@ def load_feed(path):
 
 from datetime import datetime
 
-def note(rows):
+def make_note(rows):
     reporting = rows[0]['Precincts Reporting'].strip()
     updated = rows[0]['Last Updated'].strip()
 

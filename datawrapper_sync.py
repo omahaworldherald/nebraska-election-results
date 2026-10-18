@@ -51,6 +51,23 @@ PARTY_COLORS = {
     "OTH": "#89939E",
 }
 
+def make_candidate_colors(rows):
+    colors = {}
+
+    for row in rows:
+        candidate = row["Candidate"].strip()
+
+        # Extract party code, even with a race-call checkmark.
+        match = re.search(r"\(([A-Z]+)\)$", candidate)
+
+        if match:
+            party = match.group(1)
+            colors[candidate] = PARTY_COLORS.get(
+                party, "#89939E"
+            )
+
+    return colors
+
 def api(method, path, token, data=None, content_type=None):
     headers = {
         "Authorization": f"Bearer {token}",

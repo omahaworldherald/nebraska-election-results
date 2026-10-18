@@ -51,19 +51,61 @@ def load_feed(path):
     return raw, rows
 
 
-def make_note(rows):
+from datetime import datetime
+
+def note(rows):
     reporting = rows[0]['Precincts Reporting'].strip()
     updated = rows[0]['Last Updated'].strip()
-    reporting_text = f'{reporting}% of precincts reporting' if reporting else 'Precinct reporting unavailable'
-    has_votes = any(int(r['Votes'].replace(',', '')) > 0 for r in rows)
-    status = 'Unofficial results' if has_votes else 'Awaiting results'
-    called = [r['Candidate'] for r in rows if r['Called'].strip().lower() == 'yes']
-    parts = [status, reporting_text]
+
+    # Always display reporting percentage
+    try:
+        reporting_pct = f"{float(reporting):.1f}%"
+    except (ValueError, TypeError):
+        reporting_pct = "0.0%"
+
+    # Format Nebraska's timestamp
+    formatted_time = ""
+
     if updated:
-        parts.append(f'Nebraska SOS updated: {updated}')
+        try:
+            dt = datetime.strptime(
+                updated,
+                "%m/%d/%Y %I:%M:%S %p"
+            )
+
+            hour = dt.strftime("%I").lstrip("0")
+            minute = dt.strftime("%M")
+            am_pm = dt.strftime("%p").lower()
+            month = dt.strftime("%b")
+            day = dt.day
+            year = dt.year
+
+            formatted_time = (
+                f"{hour}:{minute} {am_pm[0]}.m., "
+                f"{month}. {day}, {year}"
+            )
+
+        except ValueError:
+            formatted_time = updated
+
+    parts = [
+        f"{reporting_pct} precincts reporting"
+    ]
+
+    if formatted_time:
+        parts.append(f"Updated {formatted_time}")
+
+    # Include editorial race call when applicable
+    called = [
+        row['Candidate']
+        for row in rows
+        if row['Called'].strip().lower() == 'yes'
+    ]
+
     if called:
-        parts.append(f'Race called by Omaha World-Herald: {called[0]}')
-    return ' | '.join(parts)
+        parts.append("✓ Race called by Omaha World-Herald")
+
+    return " · ".join(parts)
 
 
 def chart_config(path):

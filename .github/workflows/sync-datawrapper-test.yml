@@ -1,0 +1,30 @@
+name: Sync Datawrapper CD1 (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Upload and publish changes (false = dry run)'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    environment: datawrapper
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync CD1
+        env:
+          DATAWRAPPER_API_TOKEN: ${{ secrets.DATAWRAPPER_API_TOKEN }}
+          DATAWRAPPER_CHART_ID: ${{ vars.DATAWRAPPER_CHART_ID }}
+          APPLY: ${{ inputs.apply }}
+        run: |
+          if [ "$APPLY" = "true" ]; then
+            python3 datawrapper_sync.py --apply
+          else
+            python3 datawrapper_sync.py
+          fi

@@ -463,8 +463,16 @@ def main():
 
             # Assign bar colors by party without changing other visual settings.
             visualize = dict(metadata.get("visualize") or {})
+
             if chart.get("type") == "d3-bars":
+                # Update both Datawrapper color settings.
                 visualize["custom-colors"] = candidate_colors
+
+                color_category = dict(
+                    visualize.get("color-category") or {}
+                )
+                color_category["map"] = candidate_colors
+                visualize["color-category"] = color_category
 
             # Upload the latest candidate results.
             api(

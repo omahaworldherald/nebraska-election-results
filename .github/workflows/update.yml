@@ -1,4 +1,3 @@
-
 name: Update Nebraska election feeds
 
 on:
@@ -17,14 +16,10 @@ jobs:
   update:
     runs-on: ubuntu-latest
     environment: datawrapper
-    timeout-minutes: 10
-
+    timeout-minutes: 15
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -43,10 +38,24 @@ jobs:
             echo "No data changes"
           fi
 
-      # Enable this step after the multi-chart
-      # sync script is installed and tested.
-      #
-      # - name: Sync Datawrapper charts
-      #   env:
-      #     DATAWRAPPER_API_TOKEN: ${{ secrets.DATAWRAPPER_API_TOKEN }}
-      #   run: python datawrapper_sync.py --config config/datawrapper-charts.csv
+      - name: Sync changed Datawrapper charts
+        id: sync
+        continue-on-error: true
+        env:
+          DATAWRAPPER_API_TOKEN: ${{ secrets.DATAWRAPPER_API_TOKEN }}
+        run: python datawrapper_sync.py --config config/datawrapper-charts.csv --apply
+
+      - name: Save successful publication fingerprints
+        if: always() && steps.sync.outcome != 'skipped'
+        run: |
+          git add config/datawrapper-published.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Record published Datawrapper chart versions"
+            git push
+          else
+            echo "No publication state changes"
+          fi
+
+      - name: Fail workflow if Datawrapper sync failed
+        if: steps.sync.outcome == 'failure'
+        run: exit 1

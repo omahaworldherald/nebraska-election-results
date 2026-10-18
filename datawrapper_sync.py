@@ -41,14 +41,14 @@ SOURCE_URL = (
 )
 
 PARTY_COLORS = {
-    "REP": "#C73E3E",
-    "DEM": "#3278BE",
-    "LIB": "#E4B447",
-    "LMN": "#35985A",
-    "NWP": "#D9955F",
-    "AFP": "#317A7D",
+    "REP": "#C71E1D",
+    "DEM": "#1D81A2",
+    "LIB": "#FA8C00",
+    "LMN": "#009076",
+    "NWP": "#465B70",
+    "AFP": "#CBB990",
     "IND": "#8B69B4",
-    "OTH": "#89939E",
+    "OTH": "#C4C4C4",
 }
 
 def make_candidate_colors(rows):

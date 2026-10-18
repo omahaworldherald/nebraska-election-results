@@ -40,6 +40,16 @@ SOURCE_URL = (
     "resultsCSV.aspx?text=All&type=All&map=CTY"
 )
 
+PARTY_COLORS = {
+    "REP": "#C73E3E",
+    "DEM": "#3278BE",
+    "LIB": "#E4B447",
+    "LMN": "#35985A",
+    "NWP": "#D9955F",
+    "AFP": "#317A7D",
+    "IND": "#8B69B4",
+    "OTH": "#89939E",
+}
 
 def api(method, path, token, data=None, content_type=None):
     headers = {

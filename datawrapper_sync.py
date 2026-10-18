@@ -378,6 +378,7 @@ def main():
 
             notes = make_note(rows)
             description = make_description(rows)
+            candidate_colors = make_candidate_colors(rows)
 
             # Include all managed fields in change detection.
             fingerprint_data = (
@@ -390,6 +391,8 @@ def main():
                 + SOURCE_NAME.encode("utf-8")
                 + b"\nSOURCE_URL\n"
                 + SOURCE_URL.encode("utf-8")
+                + b"\nCOLORS\n"
+                + json.dumps(candidate_colors, sort_keys=True).encode("utf-8")
             )
 
             fingerprint = hashlib.sha256(
@@ -453,13 +456,15 @@ def main():
             annotate["notes"] = notes
 
             # Update chart description and source attribution.
-            describe = dict(
-                metadata.get("describe") or {}
-            )
-
+            describe = dict(metadata.get("describe") or {})
             describe["intro"] = description
             describe["source-name"] = SOURCE_NAME
             describe["source-url"] = SOURCE_URL
+
+            # Assign bar colors by party without changing other visual settings.
+            visualize = dict(metadata.get("visualize") or {})
+            if chart.get("type") == "d3-bars":
+                visualize["custom-colors"] = candidate_colors
 
             # Upload the latest candidate results.
             api(
@@ -470,13 +475,15 @@ def main():
                 "text/csv"
             )
 
-            # Update metadata without changing chart styling.
+            # Update only the metadata sections managed by this script.
             payload = {
                 "metadata": {
                     "annotate": annotate,
                     "describe": describe,
                 }
             }
+            if chart.get("type") == "d3-bars":
+                payload["metadata"]["visualize"] = visualize
 
             api(
                 "PATCH",

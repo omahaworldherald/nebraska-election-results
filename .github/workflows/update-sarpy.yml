@@ -1,7 +1,9 @@
+
 name: Update Sarpy Clarity feeds
 
 on:
   workflow_dispatch:
+
   # Enable after the general-election URL is confirmed:
   # schedule:
   #   - cron: '*/5 * * * *'
@@ -17,18 +19,38 @@ jobs:
   sarpy:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v6
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+
+      # TEMPORARY: Diagnose Clarity download
+      - name: Diagnose Clarity download
+        run: |
+          curl -L -sS \
+            -o /tmp/sarpy-test.zip \
+            -w 'HTTP status: %{http_code}\nDownloaded bytes: %{size_download}\nContent type: %{content_type}\nFinal URL: %{url_effective}\n' \
+            'https://results.enr.clarityelections.com/NE/Sarpy/126282/372659/reports/summary.zip'
+
+          echo "Downloaded file information:"
+          ls -l /tmp/sarpy-test.zip
+          file /tmp/sarpy-test.zip
+
       - name: Download and convert Sarpy results
         run: python sarpy_update.py --output public
+
       - name: Commit changed Sarpy feeds
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git add public/feeds/sarpy public/feeds/display/sarpy-*.csv
+
           if ! git diff --cached --quiet; then
             git commit -m "Update Sarpy Clarity feeds"
             git pull --rebase

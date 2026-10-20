@@ -31,37 +31,69 @@ def csv_text(columns, rows):
     writer.writerows(rows)
     return out.getvalue()
 
+
 def get_zip(source):
     if source.startswith(('https://', 'http://')):
-        req = urllib.request.Request(source, headers={'User-Agent': 'NebraskaElectionResults/1.0'})
+        req = urllib.request.Request(
+            source,
+            headers={
+                'User-Agent': 'NebraskaElectionResults/1.0'
+            }
+        )
         with urllib.request.urlopen(req, timeout=45) as response:
             data = response.read(10_000_001)
     else:
         data = Path(source).read_bytes()
+
     if len(data) > 10_000_000:
         raise ValueError('Oversized Clarity ZIP')
-        print("Downloaded bytes:", len(data))
-print("Response starts with:", repr(data[:150]))
 
-if not data.startswith(b"PK"):
-    raise ValueError(
-        "Clarity did not return a ZIP file. "
-        "The server may be returning HTML or an error response."
-    )
+    # Diagnose what Clarity actually returned.
+    print("Downloaded bytes:", len(data))
+    print("Response starts with:", repr(data[:150]))
+
+    # Reject HTML or other unexpected responses.
+    if not data.startswith(b'PK'):
+        raise ValueError(
+            "Clarity did not return a ZIP file. "
+            "The server may be returning HTML or an error response."
+        )
+
+    # Extract summary.csv from the ZIP.
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
-        candidates = [n for n in archive.namelist() if Path(n).name.lower() == 'summary.csv']
+        candidates = [
+            n for n in archive.namelist()
+            if Path(n).name.lower() == 'summary.csv'
+        ]
+
         if len(candidates) != 1:
-            raise ValueError('Expected exactly one summary.csv in ZIP')
+            raise ValueError(
+                'Expected exactly one summary.csv in ZIP'
+            )
+
         info = archive.getinfo(candidates[0])
+
         if info.file_size > 10_000_000:
             raise ValueError('Oversized summary.csv')
+
         raw = archive.read(candidates[0])
-    reader = csv.DictReader(io.StringIO(raw.decode('utf-8-sig')))
+
+    # Parse the extracted CSV.
+    reader = csv.DictReader(
+        io.StringIO(raw.decode('utf-8-sig'))
+    )
+
     if not REQUIRED.issubset(reader.fieldnames or []):
-        raise ValueError(f'Clarity summary missing columns: {sorted(REQUIRED - set(reader.fieldnames or []))}')
+        missing = REQUIRED - set(reader.fieldnames or [])
+        raise ValueError(
+            f'Clarity summary missing columns: {sorted(missing)}'
+        )
+
     rows = list(reader)
+
     if not rows:
         raise ValueError('Clarity summary has no rows')
+
     return reader.fieldnames, rows
 
 def convert(subset, calls, slug):

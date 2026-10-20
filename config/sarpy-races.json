@@ -1,0 +1,9 @@
+{
+  "source_url": "https://results.enr.clarityelections.com/NE/Sarpy/126282/372659/reports/summary.zip",
+  "contests": [
+    {"slug": "sarpy-papillion-mayor", "contest_name": "Mayor of Papillion (Vote For 1)"},
+    {"slug": "sarpy-papillion-ward-2", "contest_name": "Papillion City Council Ward 2 (Vote For 1)"},
+    {"slug": "sarpy-oppd-subdivision-3", "contest_name": "Dir OPPD Subd 3 Dir (Vote For 1)"}
+  ],
+  "calls": {}
+}

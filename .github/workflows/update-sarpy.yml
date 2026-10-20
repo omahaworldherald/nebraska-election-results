@@ -29,7 +29,6 @@ jobs:
         with:
           python-version: '3.12'
 
-      # TEMPORARY: Diagnose Clarity download
       - name: Diagnose Clarity download
         run: |
           curl -L -sS \

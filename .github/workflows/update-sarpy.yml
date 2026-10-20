@@ -1,0 +1,38 @@
+name: Update Sarpy Clarity feeds
+
+on:
+  workflow_dispatch:
+  # Enable after the general-election URL is confirmed:
+  # schedule:
+  #   - cron: '*/5 * * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nebraska-results
+  cancel-in-progress: false
+
+jobs:
+  sarpy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Download and convert Sarpy results
+        run: python sarpy_update.py --output public
+      - name: Commit changed Sarpy feeds
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/feeds/sarpy public/feeds/display/sarpy-*.csv
+          if ! git diff --cached --quiet; then
+            git commit -m "Update Sarpy Clarity feeds"
+            git pull --rebase
+            git push
+          else
+            echo "No Sarpy changes"
+          fi

@@ -40,6 +40,14 @@ def get_zip(source):
         data = Path(source).read_bytes()
     if len(data) > 10_000_000:
         raise ValueError('Oversized Clarity ZIP')
+        print("Downloaded bytes:", len(data))
+print("Response starts with:", repr(data[:150]))
+
+if not data.startswith(b"PK"):
+    raise ValueError(
+        "Clarity did not return a ZIP file. "
+        "The server may be returning HTML or an error response."
+    )
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         candidates = [n for n in archive.namelist() if Path(n).name.lower() == 'summary.csv']
         if len(candidates) != 1:

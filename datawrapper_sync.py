@@ -24,13 +24,18 @@ from pathlib import Path
 
 BASE = "https://api.datawrapper.de/v3"
 
-REQUIRED = {
+CANDIDATE_REQUIRED = {
     "Candidate",
     "Votes",
     "Pct.",
     "Precincts Reporting",
     "Called",
     "Last Updated",
+}
+
+MEASURE_REQUIRED = {
+    "Measure", "For Pct.", "Against Pct.", "For Votes", "Against Votes",
+    "Precincts Reporting", "Last Updated",
 }
 
 SOURCE_NAME = "Nebraska Secretary of State"
@@ -99,7 +104,7 @@ def api(method, path, token, data=None, content_type=None):
         ) from exc
 
 
-def load_feed(path):
+def load_feed(path, feed_type="candidate"):
     raw = path.read_bytes()
 
     reader = csv.DictReader(
@@ -107,7 +112,8 @@ def load_feed(path):
     )
 
     rows = list(reader)
-    missing = REQUIRED - set(reader.fieldnames or [])
+    required = MEASURE_REQUIRED if feed_type == "measures" else CANDIDATE_REQUIRED
+    missing = required - set(reader.fieldnames or [])
 
     if missing or not rows:
         raise ValueError(
@@ -131,7 +137,7 @@ def load_feed(path):
             f"{path}: inconsistent reporting percentages"
         )
 
-    if sum(
+    if feed_type == "candidate" and sum(
         r["Called"].strip().lower() == "yes"
         for r in rows
     ) > 1:
@@ -140,14 +146,11 @@ def load_feed(path):
         )
 
     for row in rows:
-        votes = int(
-            row["Votes"].replace(",", "")
-        )
-
-        if votes < 0:
-            raise ValueError(
-                f"{path}: negative votes"
-            )
+        vote_fields = ("For Votes", "Against Votes") if feed_type == "measures" else ("Votes",)
+        for field in vote_fields:
+            votes = int(row[field].replace(",", ""))
+            if votes < 0:
+                raise ValueError(f"{path}: negative {field}")
 
     return raw, rows
 
@@ -374,11 +377,12 @@ def main():
 
     for chart_id, feed in configs:
         try:
-            raw, rows = load_feed(feed)
+            feed_type = "measures" if feed.name == "ballot-measures-all.csv" else "candidate"
+            raw, rows = load_feed(feed, feed_type)
 
             notes = make_note(rows)
-            description = make_description(rows)
-            candidate_colors = make_candidate_colors(rows)
+            description = "" if feed_type == "measures" else make_description(rows)
+            candidate_colors = {} if feed_type == "measures" else make_candidate_colors(rows)
 
             # Include all managed fields in change detection.
             fingerprint_data = (
@@ -444,6 +448,9 @@ def main():
                     f"Unexpected chart ID for {chart_id}"
                 )
 
+            if feed_type == "measures" and chart.get("type") != "tables":
+                raise ValueError(f"{chart_id}: combined ballot measures require a Datawrapper table")
+
             metadata = chart.get(
                 "metadata"
             ) or {}
@@ -464,7 +471,7 @@ def main():
             # Assign bar colors by party without changing other visual settings.
             visualize = dict(metadata.get("visualize") or {})
 
-            if chart.get("type") == "d3-bars":
+            if feed_type == "candidate" and chart.get("type") == "d3-bars":
                 # Update both Datawrapper color settings.
                 visualize["custom-colors"] = candidate_colors
 
@@ -475,7 +482,7 @@ def main():
                 visualize["color-category"] = color_category
 
             # Automatically color in-cell bars in Datawrapper tables.
-            if chart.get("type") == "tables":
+            if feed_type == "candidate" and chart.get("type") == "tables":
                 columns = dict(visualize.get("columns") or {})
 
                 pct_column = dict(columns.get("Pct.") or {})
@@ -512,7 +519,7 @@ def main():
                     "describe": describe,
                 }
             }
-            if chart.get("type") in ("d3-bars", "tables"):
+            if feed_type == "candidate" and chart.get("type") in ("d3-bars", "tables"):
                 payload["metadata"]["visualize"] = visualize
 
             api(

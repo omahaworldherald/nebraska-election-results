@@ -489,12 +489,12 @@ def main():
                 columns["Pct."] = pct_column
                 visualize["columns"] = columns
 
-    # Update category colors.
-    color_category = dict(
-        visualize.get("color-category") or {}
-    )
-    color_category["map"] = candidate_colors
-    visualize["color-category"] = color_category
+                # Update the category color map for table bars.
+                color_category = dict(
+                    visualize.get("color-category") or {}
+                )
+                color_category["map"] = candidate_colors
+                visualize["color-category"] = color_category
 
             # Upload the latest candidate results.
             api(

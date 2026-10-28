@@ -512,7 +512,7 @@ def main():
                     "describe": describe,
                 }
             }
-            if chart.get("type") == "d3-bars":
+            if chart.get("type") in ("d3-bars", "tables"):
                 payload["metadata"]["visualize"] = visualize
 
             api(

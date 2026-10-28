@@ -290,8 +290,8 @@ def write_display(
 ):
     columns = [
         'Candidate',
-        'Votes',
         'Pct.',
+        'Votes',
         'Precincts Reporting',
         'Called',
         'Last Updated'

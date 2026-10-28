@@ -386,6 +386,39 @@ def build(columns, records, config, root, calls):
             calls
         )
 
+    # Combined four-measure table: one row per statewide measure.
+    # Keep individual measure feeds unchanged for existing embeds.
+    combined_rows = []
+    common_reporting = set()
+    common_updated = set()
+    for race_id in config['ballot_measure_ids']:
+        subset = groups[str(race_id)]
+        choices = display_rows(subset, race_id, calls)
+        by_choice = {r['Candidate'].strip().lower(): r for r in choices}
+        if len(choices) != 2 or set(by_choice) != {'for', 'against'}:
+            raise ValueError(f'Ballot measure {race_id} must have For and Against choices')
+        for_choice = by_choice['for']
+        against_choice = by_choice['against']
+        common_reporting.update(r['Precincts Reporting'] for r in choices)
+        common_updated.update(r['Last Updated'] for r in choices)
+        combined_rows.append({
+            'Measure': clean_name(subset[0]['RaceName']),
+            'For Pct.': for_choice['Pct.'],
+            'Against Pct.': against_choice['Pct.'],
+            'For Votes': for_choice['Votes'],
+            'Against Votes': against_choice['Votes'],
+            'Precincts Reporting': for_choice['Precincts Reporting'],
+            'Last Updated': for_choice['Last Updated'],
+        })
+    if len(common_reporting) != 1 or len(common_updated) != 1:
+        raise ValueError('Ballot measures have differing precinct reporting or timestamps')
+    measure_columns = [
+        'Measure', 'For Pct.', 'Against Pct.', 'For Votes',
+        'Against Votes', 'Precincts Reporting', 'Last Updated'
+    ]
+    write_csv(feeds / 'display' / 'ballot-measures-all.csv',
+              measure_columns, combined_rows)
+
     # Congressional choropleth compatibility feed.
     congress_columns = [
         'district_keys',

@@ -474,6 +474,28 @@ def main():
                 color_category["map"] = candidate_colors
                 visualize["color-category"] = color_category
 
+            # Automatically color in-cell bars in Datawrapper tables.
+            if chart.get("type") == "tables":
+                columns = dict(visualize.get("columns") or {})
+
+                pct_column = dict(columns.get("Pct.") or {})
+
+                # Preserve the existing table formatting.
+                pct_column["showAsBar"] = True
+                pct_column["customBarColorBy"] = "Candidate"
+                pct_column["customColorBy"] = "Candidate"
+                pct_column["customColorBarBackground"] = candidate_colors
+
+                columns["Pct."] = pct_column
+                visualize["columns"] = columns
+
+    # Update category colors.
+    color_category = dict(
+        visualize.get("color-category") or {}
+    )
+    color_category["map"] = candidate_colors
+    visualize["color-category"] = color_category
+
             # Upload the latest candidate results.
             api(
                 "PUT",

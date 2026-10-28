@@ -20,8 +20,19 @@ with urllib.request.urlopen(request, timeout=30) as response:
 print("Chart:", chart.get("title"))
 print("Type:", chart.get("type"))
 
-print("TABLE VISUALIZATION SETTINGS:")
+metadata = chart.get("metadata", {})
+
+print("METADATA SECTIONS:")
+print(list(metadata.keys()))
+
+print("COLUMN SETTINGS:")
 print(json.dumps(
-    chart.get("metadata", {}).get("visualize", {}),
+    metadata.get("visualize", {}).get("columns", {}),
+    indent=2
+))
+
+print("CUSTOM SETTINGS:")
+print(json.dumps(
+    metadata.get("custom", {}),
     indent=2
 ))

@@ -22,17 +22,20 @@ print("Type:", chart.get("type"))
 
 metadata = chart.get("metadata", {})
 
-print("METADATA SECTIONS:")
-print(list(metadata.keys()))
+def find_values(obj, path="metadata"):
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            find_values(value, f"{path}.{key}")
+    elif isinstance(obj, list):
+        for index, value in enumerate(obj):
+            find_values(value, f"{path}[{index}]")
+    elif isinstance(obj, str):
+        if (
+            "8B69B4" in obj.upper()
+            or "Dan Osborn" in obj
+            or "color" in path.lower()
+        ):
+            print(f"{path}: {obj}")
 
-print("COLUMN SETTINGS:")
-print(json.dumps(
-    metadata.get("visualize", {}).get("columns", {}),
-    indent=2
-))
-
-print("CUSTOM SETTINGS:")
-print(json.dumps(
-    metadata.get("custom", {}),
-    indent=2
-))
+print("CHART COLOR SETTINGS:")
+find_values(metadata)

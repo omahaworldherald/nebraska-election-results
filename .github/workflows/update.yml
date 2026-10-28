@@ -44,16 +44,6 @@ jobs:
         env:
           DATAWRAPPER_API_TOKEN: ${{ secrets.DATAWRAPPER_API_TOKEN }}
         run: python datawrapper_sync.py --config config/datawrapper-charts.csv --apply --force
-
-      - name: Inspect Datawrapper table settings
-        env:
-          DATAWRAPPER_API_TOKEN: ${{ secrets.DATAWRAPPER_API_TOKEN }}
-        run: python inspect_table.py
-
-      - name: Inspect Datawrapper colors
-        env:
-          DATAWRAPPER_API_TOKEN: ${{ secrets.DATAWRAPPER_API_TOKEN }}
-        run: python inspect_colors.py
       
       - name: Save successful publication fingerprints
         if: always() && steps.sync.outcome != 'skipped'

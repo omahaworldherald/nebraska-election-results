@@ -448,9 +448,6 @@ def main():
                     f"Unexpected chart ID for {chart_id}"
                 )
 
-            if feed_type == "measures" and chart.get("type") != "tables":
-                raise ValueError(f"{chart_id}: combined ballot measures require a Datawrapper table")
-
             metadata = chart.get(
                 "metadata"
             ) or {}

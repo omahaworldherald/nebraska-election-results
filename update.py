@@ -275,7 +275,10 @@ def build(columns, records, config, root, calls):
                     if reporting != ''
                     else 'Precinct reporting unavailable'
                 )
-                district_label = f'{district}<br>{reporting_text}'
+                district_label = (
+                    f'{district}'
+                    f'<br><span style="font-weight: 400;">{reporting_text}</span>'
+                )
                 legislature_rows.append({'District': district_label, **result})
         legislature_columns = ['District'] + DISPLAY_COLUMNS
         write_csv(

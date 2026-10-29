@@ -266,7 +266,17 @@ def build(columns, records, config, root, calls):
             for result in display_rows(subset, race_id, calls):
                 # Legislature races are nonpartisan; omit the (NON) suffix.
                 result['Candidate'] = re.sub(r'\s+\(NON\)$', '', result['Candidate'])
-                legislature_rows.append({'District': district, **result})
+
+                # Show precinct reporting below the district heading in
+                # Datawrapper, while retaining its separate CSV column.
+                reporting = result['Precincts Reporting']
+                reporting_text = (
+                    f'{float(reporting):.1f}% precincts reporting'
+                    if reporting != ''
+                    else 'Precinct reporting unavailable'
+                )
+                district_label = f'<b>{district}</b><br>{reporting_text}'
+                legislature_rows.append({'District': district_label, **result})
         legislature_columns = ['District'] + DISPLAY_COLUMNS
         write_csv(
             feeds / 'display' / 'legislature-all.csv',

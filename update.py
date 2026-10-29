@@ -386,6 +386,20 @@ def build(columns, records, config, root, calls):
             calls
         )
 
+    # Editorial labels are keyed by official RaceID, never CSV row order.
+    description_path = Path('config/ballot-measure-descriptions.json')
+    descriptions = json.loads(description_path.read_text(encoding='utf-8'))
+    expected_ids = {str(rid) for rid in config['ballot_measure_ids']}
+    if set(descriptions) != expected_ids:
+        raise ValueError(
+            'Ballot description IDs do not match configured measures: '
+            f'missing={sorted(expected_ids - set(descriptions))}, '
+            f'extra={sorted(set(descriptions) - expected_ids)}'
+        )
+    for rid, label in descriptions.items():
+        if not isinstance(label, str) or not label.strip():
+            raise ValueError(f'Ballot measure {rid} has an empty or invalid label')
+
     # Combined four-measure table: one row per statewide measure.
     # Keep individual measure feeds unchanged for existing embeds.
     combined_rows = []
@@ -402,7 +416,7 @@ def build(columns, records, config, root, calls):
         common_reporting.update(r['Precincts Reporting'] for r in choices)
         common_updated.update(r['Last Updated'] for r in choices)
         combined_rows.append({
-            'Measure': clean_name(subset[0]['RaceName']),
+            'Measure': descriptions[str(race_id)].strip(),
             'For Pct.': for_choice['Pct.'],
             'Against Pct.': against_choice['Pct.'],
             'For Votes': for_choice['Votes'],

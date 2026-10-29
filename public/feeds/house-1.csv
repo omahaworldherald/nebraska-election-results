@@ -1,5 +1,5 @@
 RaceID,RaceName,PartyCode,AreaType,AreaNum,OfficeSeqNo,BallotOrder,CandidateID,CandidateName,CurrentDateTime,VoteFor,CandidateVotes,CandidatePercentage,PrecinctsReporting
-13165,For Representative in Congress - 2  Year Term,REP,CG,District 01,103,,3071,Mike  Flood ,10/29/2026 9:21:59 AM,1,0,0,"=""0/438"""
-13165,For Representative in Congress - 2  Year Term,DEM,CG,District 01,103,,3039,Chris  Backemeyer ,10/29/2026 9:21:59 AM,1,0,0,"=""0/438"""
-13165,For Representative in Congress - 2  Year Term,LIB,CG,District 01,103,,3202,Nik  Sandman ,10/29/2026 9:21:59 AM,1,0,0,"=""0/438"""
-13165,For Representative in Congress - 2  Year Term,AFP,CG,District 01,103,,3430,Dan  Hartong ,10/29/2026 9:21:59 AM,1,0,0,"=""0/438"""
+13165,For Representative in Congress - 2  Year Term,REP,CG,District 01,103,,3071,Mike  Flood ,10/29/2026 10:12:40 AM,1,4045,0.514762025960804,"=""406/438"""
+13165,For Representative in Congress - 2  Year Term,DEM,CG,District 01,103,,3039,Chris  Backemeyer ,10/29/2026 10:12:40 AM,1,1499,0.190761007890048,"=""406/438"""
+13165,For Representative in Congress - 2  Year Term,LIB,CG,District 01,103,,3202,Nik  Sandman ,10/29/2026 10:12:40 AM,1,1260,0.160346144057012,"=""406/438"""
+13165,For Representative in Congress - 2  Year Term,AFP,CG,District 01,103,,3430,Dan  Hartong ,10/29/2026 10:12:40 AM,1,1054,0.134130822092135,"=""406/438"""

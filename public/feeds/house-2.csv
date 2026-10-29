@@ -1,4 +1,4 @@
 RaceID,RaceName,PartyCode,AreaType,AreaNum,OfficeSeqNo,BallotOrder,CandidateID,CandidateName,CurrentDateTime,VoteFor,CandidateVotes,CandidatePercentage,PrecinctsReporting
-13166,For Representative in Congress - 2  Year Term,REP,CG,District 02,103,,2792,Brinker  Harding ,10/29/2026 9:21:59 AM,1,0,0,"=""0/334"""
-13166,For Representative in Congress - 2  Year Term,DEM,CG,District 02,103,,3138,Denise  Powell ,10/29/2026 9:21:59 AM,1,0,0,"=""0/334"""
-13166,For Representative in Congress - 2  Year Term,LIB,CG,District 02,103,,3239,Eric Michael Foreman ,10/29/2026 9:21:59 AM,1,0,0,"=""0/334"""
+13166,For Representative in Congress - 2  Year Term,REP,CG,District 02,103,,2792,Brinker  Harding ,10/29/2026 10:12:40 AM,1,1379,0.609637488947834,"=""334/334"""
+13166,For Representative in Congress - 2  Year Term,DEM,CG,District 02,103,,3138,Denise  Powell ,10/29/2026 10:12:40 AM,1,587,0.259504862953139,"=""334/334"""
+13166,For Representative in Congress - 2  Year Term,LIB,CG,District 02,103,,3239,Eric Michael Foreman ,10/29/2026 10:12:40 AM,1,296,0.130857648099027,"=""334/334"""

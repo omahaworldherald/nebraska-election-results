@@ -235,6 +235,38 @@ def build(columns, records, config, root, calls):
         combined_rows,
     )
 
+    # Combined Legislature results: one candidate row per configured district.
+    legislature_ids = [str(rid) for rid in config.get('legislature_race_ids', [])]
+    if legislature_ids:
+        if len(legislature_ids) != len(set(legislature_ids)):
+            raise ValueError('Duplicate legislature RaceIDs in config')
+        legislature_rows = []
+        districts_seen = set()
+        for race_id in legislature_ids:
+            subset = groups.get(race_id)
+            if not subset:
+                raise ValueError(f'Missing configured legislative race {race_id}')
+            if any((row.get('AreaType') or '').strip().upper() != 'LD' for row in subset):
+                raise ValueError(f'Race {race_id} is not a legislative district race')
+            districts = {clean_name(row.get('AreaNum')) for row in subset}
+            if len(districts) != 1:
+                raise ValueError(f'Race {race_id} has inconsistent districts')
+            district = districts.pop()
+            if district in districts_seen:
+                raise ValueError(f'Duplicate legislative district: {district}')
+            districts_seen.add(district)
+            for result in display_rows(subset, race_id, calls):
+                # Legislature races are nonpartisan; omit the (NON) suffix.
+                result['Candidate'] = re.sub(r'\s+\(NON\)$', '', result['Candidate'])
+                legislature_rows.append({'District': district, **result})
+        legislature_columns = ['District'] + DISPLAY_COLUMNS
+        write_csv(
+            feeds / 'display' / 'legislature-all.csv',
+            legislature_columns,
+            legislature_rows,
+        )
+        print(f'Legislature: {len(districts_seen)} districts, {len(legislature_rows)} candidates')
+
     congress_columns = [
         'district_keys', 'district', 'race_id', 'total_votes',
         'precincts_reporting', 'precincts_total', 'source_updated', 'has_results'

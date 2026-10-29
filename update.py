@@ -252,6 +252,14 @@ def build(columns, records, config, root, calls):
             if len(districts) != 1:
                 raise ValueError(f'Race {race_id} has inconsistent districts')
             district = districts.pop()
+
+            # Remove leading zero from legislative district numbers.
+            district = re.sub(
+                r'\d+',
+                lambda m: str(int(m.group())),
+                district
+            )
+
             if district in districts_seen:
                 raise ValueError(f'Duplicate legislative district: {district}')
             districts_seen.add(district)

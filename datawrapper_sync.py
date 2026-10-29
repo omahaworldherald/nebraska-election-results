@@ -113,6 +113,8 @@ def load_feed(path, feed_type="candidate"):
 
     rows = list(reader)
     required = MEASURE_REQUIRED if feed_type == "measures" else CANDIDATE_REQUIRED
+    if feed_type == "legislature":
+        required = CANDIDATE_REQUIRED | {"District"}
     missing = required - set(reader.fieldnames or [])
 
     if missing or not rows:
@@ -129,7 +131,7 @@ def load_feed(path, feed_type="candidate"):
             f"{path}: inconsistent source timestamps"
         )
 
-    if len({
+    if feed_type != "legislature" and len({
         r["Precincts Reporting"].strip()
         for r in rows
     }) != 1:
@@ -155,8 +157,8 @@ def load_feed(path, feed_type="candidate"):
     return raw, rows
 
 
-def make_note(rows):
-    """Generate precinct reporting and last-updated note."""
+def make_note(rows, include_reporting=True):
+    """Generate the source timestamp, optionally with precinct reporting."""
 
     reporting = rows[0]["Precincts Reporting"].strip()
     updated = rows[0]["Last Updated"].strip()
@@ -191,9 +193,7 @@ def make_note(rows):
         except ValueError:
             formatted_time = updated
 
-    parts = [
-        f"{reporting_pct} precincts reporting"
-    ]
+    parts = [f"{reporting_pct} precincts reporting"] if include_reporting else []
 
     if formatted_time:
         parts.append(
@@ -377,12 +377,17 @@ def main():
 
     for chart_id, feed in configs:
         try:
-            feed_type = "measures" if feed.name == "ballot-measures-all.csv" else "candidate"
+            if feed.name == "ballot-measures-all.csv":
+                feed_type = "measures"
+            elif feed.name == "legislature-all.csv":
+                feed_type = "legislature"
+            else:
+                feed_type = "candidate"
             raw, rows = load_feed(feed, feed_type)
 
-            notes = make_note(rows)
-            description = "" if feed_type == "measures" else make_description(rows)
-            candidate_colors = {} if feed_type == "measures" else make_candidate_colors(rows)
+            notes = make_note(rows, include_reporting=(feed_type != "legislature"))
+            description = make_description(rows) if feed_type == "candidate" else ""
+            candidate_colors = make_candidate_colors(rows) if feed_type == "candidate" else {}
 
             # Include all managed fields in change detection.
             fingerprint_data = (

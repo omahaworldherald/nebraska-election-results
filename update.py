@@ -168,19 +168,6 @@ def display_rows(subset, race_id, calls, governor=False):
             f'not found in race {race_id}'
         )
 
-    # Prevent a race call before any votes are reported.
-    if selected and not any(
-        int(
-            (r.get('CandidateVotes') or '0')
-            .replace(',', '')
-        ) > 0
-        for r in subset
-    ):
-        raise ValueError(
-            f'Race {race_id} has zero votes; '
-            'remove the call until results are available'
-        )
-
     result = []
 
     for row in subset:

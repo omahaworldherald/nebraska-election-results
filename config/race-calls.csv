@@ -1,2 +1,30 @@
 race_id,candidate_id,status
-13224,3012,retracted
+# BELOW ARE CANDIDATES THAT COULD WIN. UNCOMMENT DATA BELOW NAMES FOR PROJECTED WINNERS.
+#
+# U.S. SENATE - RaceID 13224
+# Pete Ricketts (REP)
+# 13224,3012,called
+# Dan Osborn (IND)
+# 13224,3365,called
+#
+# GOVERNOR - RaceID 13508
+# Jim Pillen (REP)
+# 13508,3352,called
+# Lynne Walz (DEM)
+# 13508,3353,called
+#
+# U.S. HOUSE DISTRICT 1 - RaceID 13165
+# Mike Flood (REP)
+# 13165,3071,called
+# Chris Backemeyer (DEM)
+# 13165,3039,called
+#
+# U.S. HOUSE DISTRICT 2 - RaceID 13166
+# Brinker Harding (REP)
+# 13166,2792,called
+# Denise Powell (DEM)
+# 13166,3138,called
+#
+# U.S. HOUSE DISTRICT 3 - RaceID 13167
+# Adrian Smith (REP)
+# 13167,2875,called

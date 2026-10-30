@@ -67,28 +67,45 @@ def clean_name(value):
 def read_calls(path):
     if not path.exists():
         return {}
+
     calls = {}
+
     with path.open(newline='', encoding='utf-8-sig') as stream:
         for row in csv.DictReader(stream):
-            for row in csv.DictReader(stream):
-                race_id = (row.get('race_id') or '').strip()
+            race_id = (row.get('race_id') or '').strip()
 
-                # Ignore commented-out reference rows.
-                if race_id.startswith('#'):
-                    continue
+            # Ignore commented-out reference rows.
+            if race_id.startswith('#'):
+                continue
+
             candidate_id = (row.get('candidate_id') or '').strip()
             status = (row.get('status') or '').strip().lower()
+
             if not race_id and not candidate_id and not status:
                 continue
+
             if status not in ('called', 'retracted'):
-                raise ValueError(f'Invalid race-call status for {race_id}: {status}')
+                raise ValueError(
+                    f'Invalid race-call status for {race_id}: {status}'
+                )
+
             if not race_id:
                 raise ValueError('Race call is missing race_id')
+
             if status == 'called' and not candidate_id:
-                raise ValueError(f'Called race {race_id} is missing candidate_id')
+                raise ValueError(
+                    f'Called race {race_id} is missing candidate_id'
+                )
+
             if race_id in calls:
-                raise ValueError(f'Duplicate race call entry: {race_id}')
-            calls[race_id] = candidate_id if status == 'called' else None
+                raise ValueError(
+                    f'Duplicate race call entry: {race_id}'
+                )
+
+            calls[race_id] = (
+                candidate_id if status == 'called' else None
+            )
+
     return calls
 
 

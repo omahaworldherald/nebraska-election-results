@@ -285,20 +285,37 @@ def build(columns, records, config, root, calls):
             if district in districts_seen:
                 raise ValueError(f'Duplicate legislative district: {district}')
             districts_seen.add(district)
-            for result in display_rows(subset, race_id, calls):
+            results = display_rows(subset, race_id, calls)
+
+            # A legislative district may have one projected winner.
+            projected_winner = ''
+            for result in results:
+                if result['Called'] == 'Yes':
+                    projected_winner = re.sub(
+                        r'\s+\(NON\)$', '',
+                        result['Candidate'].removeprefix('✓').strip()
+                    )
+                    break
+
+            for result in results:
                 # Legislature races are nonpartisan; omit the (NON) suffix.
                 result['Candidate'] = re.sub(r'\s+\(NON\)$', '', result['Candidate'])
 
-                # Show precinct reporting below the district heading in
-                # Datawrapper, while retaining its separate CSV column.
+                # Keep reporting in the CSV and under the district heading.
                 reporting = result['Precincts Reporting']
                 reporting_text = (
                     f'{float(reporting):.1f}% precincts reporting'
                     if reporting != ''
                     else 'Precinct reporting unavailable'
                 )
-                district_label = (
-                    f'{district}'
+
+                district_label = district
+                if projected_winner:
+                    district_label += (
+                        f'<br><span style="font-weight: 400;">'
+                        f'{projected_winner} is the projected winner.</span>'
+                    )
+                district_label += (
                     f'<br><span style="font-weight: 400;">{reporting_text}</span>'
                 )
                 legislature_rows.append({'District': district_label, **result})

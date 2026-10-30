@@ -70,7 +70,12 @@ def read_calls(path):
     calls = {}
     with path.open(newline='', encoding='utf-8-sig') as stream:
         for row in csv.DictReader(stream):
-            race_id = (row.get('race_id') or '').strip()
+            for row in csv.DictReader(stream):
+                race_id = (row.get('race_id') or '').strip()
+
+                # Ignore commented-out reference rows.
+                if race_id.startswith('#'):
+                    continue
             candidate_id = (row.get('candidate_id') or '').strip()
             status = (row.get('status') or '').strip().lower()
             if not race_id and not candidate_id and not status:

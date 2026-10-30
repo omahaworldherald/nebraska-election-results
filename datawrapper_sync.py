@@ -220,7 +220,7 @@ def make_description(rows):
                 candidate
             )
 
-            return f"Race called for {candidate}."
+            return f"{candidate} is the projected winner."
 
     return ""
 

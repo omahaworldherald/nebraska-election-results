@@ -34,7 +34,7 @@ jobs:
           curl -L -sS \
             -o /tmp/sarpy-test.zip \
             -w 'HTTP status: %{http_code}\nDownloaded bytes: %{size_download}\nContent type: %{content_type}\nFinal URL: %{url_effective}\n' \
-            'https://results.enr.clarityelections.com/NE/Sarpy/126282/372659/reports/summary.zip'
+            'https://results.enr.clarityelections.com/NE/Sarpy/127564/382914/reports/summary.zip'
 
           echo "Downloaded file information:"
           ls -l /tmp/sarpy-test.zip

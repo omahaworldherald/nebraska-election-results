@@ -50,7 +50,7 @@ PARTY_COLORS = {
     "DEM": "#1D81A2",
     "LIB": "#FA8C00",
     "LMN": "#009076",
-    "NWP": "#465B70",
+    "NWP": "#303030",
     "AFP": "#CBB990",
     "IND": "#8B69B4",
     "OTH": "#C4C4C4",

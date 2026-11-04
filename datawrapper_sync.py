@@ -193,7 +193,7 @@ def make_note(rows, include_reporting=True):
         except ValueError:
             formatted_time = updated
 
-    parts = [f"{reporting_pct} precincts reporting"] if include_reporting else []
+    parts = [f"{reporting_pct} precincts fully reporting"] if include_reporting else []
 
     if formatted_time:
         parts.append(

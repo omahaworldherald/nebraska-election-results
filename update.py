@@ -145,7 +145,7 @@ def display_rows(subset, race_id, calls, governor=False):
         votes = int((row.get('CandidateVotes') or '0').replace(',', ''))
         pct = (row.get('CandidatePercentage') or '').strip().replace('%', '')
         try:
-            pct = round(float(pct), 1) if pct else ''
+            100 * counts[party] / total if total else 0
         except ValueError:
             pct = ''
 

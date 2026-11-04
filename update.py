@@ -8,6 +8,7 @@ import json
 import re
 import urllib.request
 from collections import defaultdict
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 SOURCE = (
@@ -143,10 +144,24 @@ def display_rows(subset, race_id, calls, governor=False):
             else ''
         )
         votes = int((row.get('CandidateVotes') or '0').replace(',', ''))
-        pct = (row.get('CandidatePercentage') or '').strip().replace('%', '')
-        try:
-            100 * counts[party] / total if total else 0
-        except ValueError:
+        # SOS CandidatePercentage is a share (0.3596 = 35.96%), not
+        # a percentage-point value. Convert using Decimal so the CSV keeps
+        # all meaningful digits. Datawrapper formats 35.96 as 36.0% using
+        # the 0.0% number format; it does not multiply by 100 itself.
+        raw_pct = (row.get('CandidatePercentage') or '').strip().replace('%', '')
+        if raw_pct:
+            try:
+                share = Decimal(raw_pct.replace(',', ''))
+            except InvalidOperation as exc:
+                raise ValueError(
+                    f'Invalid candidate percentage for race {race_id}: {raw_pct}'
+                ) from exc
+            if not share.is_finite() or not Decimal('0') <= share <= Decimal('1'):
+                raise ValueError(
+                    f'Candidate percentage out of range for race {race_id}: {raw_pct}'
+                )
+            pct = format(share * 100, 'f')
+        else:
             pct = ''
 
         result.append({
@@ -371,7 +386,8 @@ def build(columns, records, config, root, calls):
         for party in PARTIES:
             entry[f'{party}_votes'] = counts[party]
             entry[f'{party}_pct'] = (
-                round(100 * counts[party] / total, 3) if total else 0
+                format(Decimal(100) * Decimal(counts[party]) / Decimal(total), 'f')
+                if total else 0
             )
         congress.append(entry)
     write_csv(feeds / 'congress.csv', congress_columns, congress)

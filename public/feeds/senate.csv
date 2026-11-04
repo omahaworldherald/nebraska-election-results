@@ -1,6 +1,6 @@
 RaceID,RaceName,PartyCode,AreaType,AreaNum,OfficeSeqNo,BallotOrder,CandidateID,CandidateName,CurrentDateTime,VoteFor,CandidateVotes,CandidatePercentage,PrecinctsReporting
-13224,For United States Senator - 6  Year Term,REP,SW,,102,,3012,Pete  Ricketts ,11/3/2026 8:00:03 PM,1,0,0,"=""0/1322"""
-13224,For United States Senator - 6  Year Term,LMN,SW,,102,,3249,Mike  Marvin ,11/3/2026 8:00:03 PM,1,0,0,"=""0/1322"""
-13224,For United States Senator - 6  Year Term,NWP,SW,,102,,3434,Robin  Richards ,11/3/2026 8:00:03 PM,1,0,0,"=""0/1322"""
-13224,For United States Senator - 6  Year Term,AFP,SW,,102,,3429,Chuck  Conboy ,11/3/2026 8:00:03 PM,1,0,0,"=""0/1322"""
-13224,For United States Senator - 6  Year Term,PET,SW,,102,,3365,Dan  Osborn ,11/3/2026 8:00:03 PM,1,0,0,"=""0/1322"""
+13224,For United States Senator - 6  Year Term,REP,SW,,102,,3012,Pete  Ricketts ,11/3/2026 8:01:17 PM,1,50327,0.366713300980778,"=""0/1322"""
+13224,For United States Senator - 6  Year Term,LMN,SW,,102,,3249,Mike  Marvin ,11/3/2026 8:01:17 PM,1,2321,0.0169122254769087,"=""0/1322"""
+13224,For United States Senator - 6  Year Term,NWP,SW,,102,,3434,Robin  Richards ,11/3/2026 8:01:17 PM,1,3454,0.0251679563969163,"=""0/1322"""
+13224,For United States Senator - 6  Year Term,AFP,SW,,102,,3429,Chuck  Conboy ,11/3/2026 8:01:17 PM,1,1281,0.00933414943383028,"=""0/1322"""
+13224,For United States Senator - 6  Year Term,PET,SW,,102,,3365,Dan  Osborn ,11/3/2026 8:01:17 PM,1,79855,0.581872367711567,"=""0/1322"""

@@ -164,7 +164,7 @@ def make_note(rows, include_reporting=True):
     updated = rows[0]["Last Updated"].strip()
 
     try:
-        reporting_pct = f"{float(reporting):.1f}%"
+        reporting_pct = f"{float(reporting):.1f}".rstrip("0").rstrip(".") + "%"
     except (ValueError, TypeError):
         reporting_pct = "0.0%"
 

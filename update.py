@@ -319,7 +319,7 @@ def build(columns, records, config, root, calls):
                 # Keep reporting in the CSV and under the district heading.
                 reporting = result['Precincts Reporting']
                 reporting_text = (
-                    f'{float(reporting):.1f}% precincts reporting'
+                    f"{float(reporting):.1f}".rstrip("0").rstrip(".") + "% precincts fully reporting"
                     if reporting != ''
                     else 'Precinct reporting unavailable'
                 )
